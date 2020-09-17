@@ -239,7 +239,7 @@ function WeatherForecast (data) {
     }
 
     return {
-        data = data,
+        data: data,
 
         //Place
         setCurrentPlace(currentPlaceName) {
@@ -489,7 +489,7 @@ function WeatherHistory(data) {
     }
 
     return {
-        data = data,
+        data: data,
 
         //Place
         setCurrentPlace(currentPlaceName) {
