@@ -54,14 +54,14 @@ function point(x, y) {
       return y;
     },
     moveTo(x1, y1) {
-      x += x1;
-      y += y1;
+      x = x1;
+      y = y1;
     },
     toString() {
       return "x = " + x + ", y = " + y;
     },
     copy() {
-      return { x, y };
+      return point(x, y);
     },
   };
 }
