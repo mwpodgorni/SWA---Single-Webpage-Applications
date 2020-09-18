@@ -25,21 +25,28 @@ from = new Date (2020, 08, 15);
 to = new Date (2020, 09, 25);
 
 myDateInterval = new DateInterval(from, to);
-console.log (myDateInterval.contains(new Date()));
+// console.log (myDateInterval.contains(new Date()));
 
 
 
 function Event(options) {
+
+    function time() {return options.time}
     return {
-        time() {return options.time},
-        place() {return options.place},
+        timevalue: options.time,  
+        time
     }
 }
 
 function DataType(options) {
     return {
+        typeValue: options.type,
+        unitValue: options.unit,
         type() {return options.type},
         unit() { return options.unit},
+        setUnit(unit) {
+            this.unitValue = unit;
+        }
     }
 }
 
@@ -48,16 +55,19 @@ function DataType(options) {
 
 function WeatherPrediction(options) {
 
-    return { 
+    return {
+
         ...Event(options),
 
         ...DataType(options),  
+
+        from : options.from,
+        to : options.to,
 
         to () { return options.to; },
 
         from () { return options.from; },
 
-        //matches is in children
 
     }
 }
@@ -71,17 +81,19 @@ wp1 = WeatherPrediction(from, to, 'type', 'europeUnit', '11:30', 'Horsens');
 
 
 
-function TemperaturePrediction (value, from, to, type, unit, time, place) {
-    const options = {from, to, type, unit, time, place};
+function TemperaturePrediction (time, place, type, unit, from, to) {
+    const options = {time, place, type, unit, from, to};
     
     return {
-        value() { return value},
 
         ...WeatherPrediction(options),
 
         matches(weatherData) {
-            if ( weatherData.value() == value  &&
-                 weatherData.time() == time &&
+            if ( 
+                // weatherData.value() == value  &&
+                 weatherData.value() > from &&
+                 weatherData.value() < to &&
+                 weatherData.time() == time &&  
                  weatherData.place() == place &&
                  weatherData.type() == type &&
                  weatherData.unit() == unit ) 
@@ -95,13 +107,22 @@ function TemperaturePrediction (value, from, to, type, unit, time, place) {
        
         convertToF() {
             if (unit != 'US') {
-                value = (value * 9/5 + 32);
+                from = (from * 9/5 + 32);
+                to = (to * 9/5 + 32);
+                type = 'US';
+
             } 
+        },
+
+        convertToInternationalUnits() {
+            this.convertToC();
         },
 
         convertToC() {
             if (unit != 'EU') {
-                value = (value - 32) / (9/5);
+                from  = (from - 32) / (9/5);
+                to = (to - 32) / (9/5);
+                type = 'EU';
             } 
         }
     }
@@ -109,12 +130,12 @@ function TemperaturePrediction (value, from, to, type, unit, time, place) {
 
 
 //'types' - is array
-function PrecipitationPrediction (value, types, from, to, type, unit, time, place) {
+function PrecipitationPrediction (time, place, type, unit, from, to, types) {
+
     
-    const options = {from, to, type, unit, time, place};
+    const options = {time, place, type, unit, from, to, types};
 
     return {
-        value() { return value},
 
         ...WeatherPrediction(options),
 
@@ -122,13 +143,16 @@ function PrecipitationPrediction (value, types, from, to, type, unit, time, plac
             return types;
         },
 
-        matches(weatherData) {
-            if ( weatherData.value() == value  &&
+        matches (weatherData) {
+            if ( 
+                 types.includes(weatherData.value) &&
+                 weatherData.value() > from &&
+                 weatherData.value() < to &&
                  weatherData.time() == time &&
                  weatherData.place() == place &&
                  weatherData.type() == type &&
                  weatherData.unit() == unit &&
-                 weatherData.types().equals(types()) ) 
+                 types.includes(weatherData.precipitationType) ) 
             {
                 return true
             } else {
@@ -137,42 +161,50 @@ function PrecipitationPrediction (value, types, from, to, type, unit, time, plac
         
         },
 
+
         convertToInches() {
             if (unit != 'US') {
-                value = (value * 9/5 + 32);
+                from = (from * 25.4);
+                to = (to * 25.4);
+                type = 'US';
             }
+        },
+
+        convertToInternationalUnits() {
+        
+            this.convertToMM();
         },
 
         convertToMM() {
             if (unit != 'EU') {
-                value = (value - 32) / (9/5);
+                from  = (from / 25.4);
+                to = (to / 25.4 );
+                type = 'EU'
             } 
         }
     }
 }
 
 //'directions' - is array
-function WindPrediction (value, directions, from, to, type, unit, time, place) {
-    const options = {from, to, type, unit, time, place};
+function WindPrediction (time ,place, type, unit, from, to, directions) {
+    const options = {time ,place, type, unit, from, to};
 
     return {
         ...WeatherPrediction(options),
-
-        value() { 
-            return value
-        },
 
         directions() {
             return directions
         },
 
         matches(weatherData) {
-            if ( weatherData.value() == value  &&
+            if (
+                 weatherData.value() > from &&
+                 weatherData.value() < to &&
                  weatherData.time() == time &&
                  weatherData.place() == place &&
                  weatherData.type() == type &&
                  weatherData.unit() == unit &&
-                 weatherData.directions().equals(directions() ) ) 
+                 directions.includes(weatherData.direction)  ) 
             {
                 return true
             } else {
@@ -181,15 +213,28 @@ function WindPrediction (value, directions, from, to, type, unit, time, place) {
         
         },
 
+        convertToUSUnits() {
+            this.convertToMPH();
+        },
+
         convertToMPH() {
             if (unit != 'US') {
-                value = (value * 2.23694);
+                to = (to  * 2.23694);
+                from = (from * 2.23694);
+            
             }
+        },
+
+        convertToInternationalUnits() {
+            this.convertToMS();
         },
 
         convertToMS() {
             if (unit != 'EU') {
-                value = (value / 2.23694);
+                from = (from * 2.23694);
+                to = (to * 2.23694);
+                type = 'EU'
+
             } 
         }
     }
@@ -197,18 +242,17 @@ function WindPrediction (value, directions, from, to, type, unit, time, place) {
 
 
 tp = TemperaturePrediction('25', from, to, 'type', 'EU', '11:30', 'Horsens');
-// console.log ('tpvalue: ', tp);
 
 
-
+    
 
 function WeatherForecast (data) {
 
-    const displayDataWithSpecificPlace = (currentPlace) => {
-        // console.log ('this function filters data by the specific place only');
+    const displayDataWithSpecificPlace = (array) => {
+
         let filteredArray = [];
-        data.forEach(element => {
-            if (element.place() == currentPlace ) {
+        array.forEach(element => {
+            if (element.place() == this.currentPlace ) {
                 filteredArray.push (element);
             }
 
@@ -216,10 +260,10 @@ function WeatherForecast (data) {
         return filteredArray
     }
 
-    const displayDataWithSpecificType = (currentType) => {
+    const displayDataWithSpecificType = (array) => {
         let filteredArray = [];
-        data.forEach(element => {
-            if (element.type() == currentType ) {
+        array.forEach(element => {
+            if (element.type() == this.currentType ) {
                 filteredArray.push (element);
             }
 
@@ -227,9 +271,9 @@ function WeatherForecast (data) {
         return filteredArray
     }
 
-    const displayDataWithSpecificPeriod = (currentPeriod) => {
+    const displayDataWithSpecificPeriod = (array) => {
         let filteredArray = [];
-        data.forEach(element => {
+        array.forEach(element => {
             if (currentPeriod.contains( element.time() ) ) {
                 filteredArray.push (element);
             }
@@ -247,11 +291,9 @@ function WeatherForecast (data) {
         },
 
         getCurrentPlace() {
-            if (currentPlace != null) {
-                displayDataWithSpecificPlace(currentPlace);
-            } else {
-                return data;
-            }   
+           if  (currentPlace != null ) {
+                return currentPlace
+           }
         },
         
         clearCurrentPlace() {
@@ -266,10 +308,8 @@ function WeatherForecast (data) {
 
         getCurrentType() {
             if (currentType != null) {
-                displayDataWithSpecificType(currentType);
-            } else {
-                return data;
-            }   
+                return currentType;
+            }
         },
         
         clearCurrentType() {
@@ -284,10 +324,8 @@ function WeatherForecast (data) {
 
         getCurrentPeriod() {
             if (currentPeriod != null) {
-                displayDataWithSpecificPeriod(currentPeriod);
-            } else {
-                return data;
-            }   
+                return (currentPeriod);
+            } 
         },
         
         clearCurrentPeriod() {
@@ -299,31 +337,23 @@ function WeatherForecast (data) {
             //use weatherPredictions-> temp predictions convert to F()
             if (data != null){
                 data.forEach(element => {
-                    if (element instanceof TemperaturePrediction) {
-                         element.convertToF();   
+                    element.convertToUSUnits()
+                    if (element.unit() == 'EU') {
+                        element.setUnit('US');
                     }
-                    if (element instanceof PrecipitationPrediction) {
-                        element.convertToInches();   
-                    }
-                    if (element instanceof WindPrediction) {
-                        element.convertToMPH();
-                    } 
+                   
                 });
             }
         },
         
         convertToInternationalUnits() {
-            if (data != null){
-                data.forEach(element => {
-                    if (element instanceof TemperaturePrediction) {
-                         element.convertToC();   
+            console.log("it comes")
+            if (this.data != null){
+                this.data.forEach(element => {
+                    element.convertToInternationalUnits();
+                    if (element.unit() == 'US') {
+                        element.setUnit('EU');
                     }
-                    if (element instanceof PrecipitationPrediction) {
-                        element.convertToMM();   
-                    }
-                    if (element instanceof WindPrediction) {
-                        element.convertToMS();
-                    } 
                 });
             }
         },
@@ -333,7 +363,14 @@ function WeatherForecast (data) {
         },
 
         data() {
-            return data;
+
+            filteredArray = data;
+            
+            if (this.currentPlace != null) { displayDataWithSpecificPlace(filteredArray) } 
+            if (this.currentType != null) { displayDataWithSpecificType(filteredArray) }
+            if (this.currentPeriod != null) { displayDataWithSpecificPeriod(filteredArray) }
+            
+            return filteredArray;
         }
 
     }
@@ -369,96 +406,133 @@ function WeatherData(options) {
 }
 
 
-function Temperature (value, type, unit, time, place) {
-    const options = {value, type, unit, time, place};
-    
-    return {
-        value() { return value},
 
+function Temperature (time, place, type, unit, value) {
+    const options = {value, type, unit, time, place};
+
+    return {
+        valueValue: value,
+
+        value() { return value},
         ...WeatherData(options),
        
+        convertToUSUnits () {
+            this.convertToF();
+        },
+
         convertToF() {
             if (unit != 'US') {
-                value = (value * 9/5 + 32);
+                this.valueValue = (this.valueValue * 9/5 + 32);
+    
             } 
+        },
+        
+        convertToInternationalUnits () {
+            this.convertToC();
         },
 
         convertToC() {
             if (unit != 'EU') {
-                value = (value - 32) / (9/5);
+                this.valueValue = (this.valueValue - 32) / (9/5);
             } 
+        
         }
     }
 }
 
 
-function Precipitation (value, precipitationType, type, unit, time, place) {
+function Precipitation (time, place, type, unit, value, precipitationType) {
     
-    const options = {value, precipitationType, type, unit, time, place};
+    const options = { precipitationType, type, unit, time, place};
 
     return {
+
+        valueValue: value,
+        
         value() { return value},
 
+        
         ...WeatherPrediction(options),
 
         precipitationType() {
             return precipitationType;
         },
 
+
+        convertToUSUnits() {
+            this.convertToInches();
+        },
+        
         convertToInches() {
             if (unit != 'US') {
-                value = (value * 9/5 + 32);
+                this.valueValue = (this.valueValue * 25.4);
             }
+        },
+
+        convertToInternationalUnits() {
+            this.convertToMM();
         },
 
         convertToMM() {
             if (unit != 'EU') {
-                value = (value - 32) / (9/5);
+                this.valueValue = (this.valueValue / 25.4);
             } 
         }
     }
 }
 
-function Wind (value, direction, type, unit, time, place) {
+
+
+function Wind (time, place, type, unit, value, direction) {
     
-    const options = {value, direction, type, unit, time, place};
+    const options = {time, place, type, unit, value, direction};
 
     return {
+
+        valueValue: value,
+
         value() { return value},
 
         ...WeatherPrediction(options),
 
-        precipitationType() {
-            return precipitationType;
+        direction() {
+            return direction;
+        },
+
+        convertToUSUnits() {
+            this.convertToMPH();
         },
 
         convertToMPH() {
             if (unit != 'US') {
-                value = (value * 2.23694);
+                this.valueValue = (this.valueValue  * 2.23694);
             }
+        },
+
+        convertToInternationalUnits(){
+            this.convertToMS();
         },
 
         convertToMS() {
             if (unit != 'EU') {
-                value = (value / 2.23694);
+                this.valueValue  = (this.valueValue  / 2.23694);
             } 
         }
     }
 }
 
 prec = new Precipitation (2, 'precipitationType1', 'data-type', 'EU', new Date(), 'Horsens' );
-console.log ('prec.value ', prec.value());
+// console.log ('prec.value ', prec.value());
 
 
 
+function WeatherHistory(weatherData) {
 
+    const displayDataWithSpecificPlace = (array) => {
 
-function WeatherHistory(data) {
-
-    const displayDataWithSpecificPlace = (currentPlace) => {
         let filteredArray = [];
-        data.forEach(element => {
-            if (element.place() == currentPlace ) {
+        array.forEach(element => {
+            if (element.place() == this.currentPlace ) {
                 filteredArray.push (element);
             }
 
@@ -466,10 +540,10 @@ function WeatherHistory(data) {
         return filteredArray
     }
 
-    const displayDataWithSpecificType = (currentType) => {
+    const displayDataWithSpecificType = (array) => {
         let filteredArray = [];
-        data.forEach(element => {
-            if (element.type() == currentType ) {
+        array.forEach(element => {
+            if (element.type() == this.currentType ) {
                 filteredArray.push (element);
             }
 
@@ -477,9 +551,9 @@ function WeatherHistory(data) {
         return filteredArray
     }
 
-    const displayDataWithSpecificPeriod = (currentPeriod) => {
+    const displayDataWithSpecificPeriod = (array) => {
         let filteredArray = [];
-        data.forEach(element => {
+        array.forEach(element => {
             if (currentPeriod.contains( element.time() ) ) {
                 filteredArray.push (element);
             }
@@ -488,8 +562,9 @@ function WeatherHistory(data) {
         return filteredArray;
     }
 
+
     return {
-        data: data,
+        weatherData: weatherData,
 
         //Place
         setCurrentPlace(currentPlaceName) {
@@ -498,10 +573,8 @@ function WeatherHistory(data) {
 
         getCurrentPlace() {
             if (currentPlace != null) {
-                displayDataWithSpecificPlace(currentPlace);
-            } else {
-                return data;
-            }   
+                return (currentPlace);
+            } 
         },
         
         clearCurrentPlace() {
@@ -516,17 +589,14 @@ function WeatherHistory(data) {
 
         getCurrentType() {
             if (currentType != null) {
-                displayDataWithSpecificType(currentType);
-            } else {
-                return data;
-            }   
+               return (currentType);
+            } 
         },
         
         clearCurrentType() {
             currentType = null;
         },
-
-
+       
         //Period
         setCurrentPeriod(currentPeriod) {
             currentPeriod = currentPeriod;
@@ -534,10 +604,8 @@ function WeatherHistory(data) {
 
         getCurrentPeriod() {
             if (currentPeriod != null) {
-                displayDataWithSpecificPeriod(currentPeriod);
-            } else {
-                return data;
-            }   
+                return (currentPeriod);
+            }
         },
         
         clearCurrentPeriod() {
@@ -546,45 +614,168 @@ function WeatherHistory(data) {
 
         
         convertToUSUnits() {
-            //use weatherPredictions-> temp predictions convert to F()
-            if (data != null){
-                data.forEach(element => {
-                    if (element instanceof TemperaturePrediction) {
-                         element.convertToF();   
+        console.log("call");
+            if (weatherData != null){
+                weatherData.forEach(element => {
+                    console.log('comes here2');
+
+                    element.convertToUSUnits();
+
+                    if (element.unit() == 'EU') {
+                        element.setUnit('US');
                     }
-                    if (element instanceof PrecipitationPrediction) {
-                        element.convertToInches();   
-                    }
-                    if (element instanceof WindPrediction) {
-                        element.convertToMPH();
-                    } 
+
                 });
             }
         },
         
         convertToInternationalUnits() {
-            if (data != null){
-                data.forEach(element => {
-                    if (element instanceof TemperaturePrediction) {
-                         element.convertToC();   
-                    }
-                    if (element instanceof PrecipitationPrediction) {
-                        element.convertToMM();   
-                    }
-                    if (element instanceof WindPrediction) {
-                        element.convertToMS();
-                    } 
+            console.log('graraa');
+            if (this.weatherData != null){
+               
+                this.weatherData.forEach(element => {
+                   
+                        element.convertToInternationalUnits();
+
+                        if (element.unit() == 'US') {
+                            element.setUnit('EU');
+                        }
+                   
                 });
             }
         },
 
-        add(data) {
-            data = data
+        add(weatherData) {
+            weatherData = weatherData;
         },
 
-        data() {
-            return data;
+        data () {
+
+            filteredArray = weatherData;
+            
+            if (this.currentPlace != null) { filterArray = displayDataWithSpecificPlace(filteredArray) } 
+            if (this.currentType != null) { filterArray = displayDataWithSpecificType(filteredArray) }
+            if (this.currentPeriod != null) { filterArray = displayDataWithSpecificPeriod(filteredArray) }
+            
+            return filteredArray;
         }
 
     }
 }
+
+value = new Date()
+// console.log (value);
+
+
+val = new Date(2020, 10, 1, 12, 0, 0, 0)
+// console.log (val.getMonth());
+
+
+
+// tempt = new Temperature("2000-01-01T02:00:00", "Horsens", "type1", "US", 200);
+// console.log ("", tempt );
+
+
+
+// function test(val) {
+
+//     return {
+//         val: val,
+//     }
+// }
+
+// temp = new test ("aaa");
+// console.log (temp);
+
+
+
+//Program Test
+let weatherData = [
+    new Temperature("2000-01-01T02:00:00", "Horsens", "type1", "US", 200),
+    new Temperature("2000-01-02T02:00:00", "Vejle", "type2", "US", 150),
+    new Precipitation(
+      "2000-01-03T02:00:00",
+      "Arhus",
+      "type3",
+      "US",
+      500,
+      "precipitationType1"
+    ),
+    new Precipitation(
+      "2000-01-04T02:00:00",
+      "Alborg",
+      "type4",
+      "US",
+      600,
+      "precipitationType2"
+    ),
+    new Wind("2000-01-05T02:00:00", "Kolding", "type5", "US", 300, "East"),
+    new Wind("2000-01-06T02:00:00", "Billund", "type6", "US", 350, "West"),
+  ];
+
+  
+  
+
+//   function TemperaturePrediction (time, place, type, unit, from, to) {
+  let weatherPrediction = [
+    new TemperaturePrediction(
+      "2000-01-01T02:00:00",
+      "Horsens",
+      "type1",
+      "US",
+      1000,
+      100
+    ),
+    new TemperaturePrediction(
+      "2000-01-02T02:00:00",
+      "Vejle",
+      "type2",
+      "US",
+      600,
+      300
+    ),
+    new PrecipitationPrediction(
+      "2000-01-03T02:00:00",
+      "Arhus",
+      "type3",
+      "US",
+      700,
+      400,
+      ["precipitationType1", "precipitationType5"]
+    ),
+    new PrecipitationPrediction(
+      "2000-01-04T02:00:00",
+      "Alborg",
+      "type4",
+      "US",
+      800,
+      400,
+      ["precipitationType2", "precipitationType7"]
+    ),
+    new WindPrediction(
+      "2000-01-05T02:00:00",
+      "Kolding",
+      "type5",
+      "US",
+      500,
+      300,
+      ["East", "South"]
+    ),
+    new WindPrediction(
+      "2000-01-06T02:00:00",
+      "Billund",
+      "type6",
+      "US",
+      600,
+      250,
+      ["West", "North"]
+    ),
+  ];
+
+//   let weatherForecast = new WeatherForecast(weatherPrediction);
+  let weatherHistory = new WeatherHistory(weatherData);
+  weatherHistory.convertToInternationalUnits();
+  console.log ( "!!", weatherHistory.data());
+
+//   console.log ("aa", weatherHistory.data()[0].value;
+//   console.log(weatherPrediction)
