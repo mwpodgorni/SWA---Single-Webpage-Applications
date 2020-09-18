@@ -25,15 +25,18 @@ class DateInterval {
 function DataType(type, unit) {
   this.typeValue = type;
   this.unitValue = unit;
-  DataType.prototype = {
-    type: function () {
-      return this.typeValue;
-    },
-    unit: function () {
-      return this.unitValue;
-    },
-  };
 }
+DataType.prototype = {
+  type: function () {
+    return this.typeValue;
+  },
+  unit: function () {
+    return this.unitValue;
+  },
+  setUnit: function (unit) {
+    this.unitValue = unit;
+  },
+};
 
 //Event class
 function Event(time, place) {
@@ -41,15 +44,15 @@ function Event(time, place) {
   time = time + ".000Z";
   this.timeValue = new Date(time);
   this.placeValue = place;
-  Event.prototype = {
-    time: function () {
-      return this.timeValue;
-    },
-    place: function () {
-      return this.placeValue;
-    },
-  };
 }
+Event.prototype = {
+  time: function () {
+    return this.timeValue;
+  },
+  place: function () {
+    return this.placeValue;
+  },
+};
 
 class WeatherForecast {
   constructor(data) {
@@ -95,6 +98,7 @@ class WeatherForecast {
         } else if (element instanceof TemperaturePrediction) {
           element.convertToF();
         }
+        element.setUnit("US");
       }
     });
   }
@@ -108,6 +112,7 @@ class WeatherForecast {
         } else if (element instanceof TemperaturePrediction) {
           element.convertToC();
         }
+        element.setUnit("International");
       }
     });
   }
@@ -246,6 +251,7 @@ class WeatherHistory {
         } else if (element instanceof Temperature) {
           element.convertToF();
         }
+        element.setUnit("US");
       }
     });
   }
@@ -259,6 +265,7 @@ class WeatherHistory {
         } else if (element instanceof Temperature) {
           element.convertToC();
         }
+        element.setUnit("International");
       }
     });
   }
@@ -343,23 +350,26 @@ WindPrediction.prototype.directions = function () {
   return this.directionsValue;
 };
 WindPrediction.prototype.matches = function (data) {
-  console.log("wind prediciton matches");
-  if (this.directionsValue.indexOf(data.direction()) > -1) {
-    return true;
+  if (data instanceof Wind) {
+    if (this.directionsValue.indexOf(data.direction()) > -1) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
     return false;
   }
 };
 WindPrediction.prototype.convertToMPH = function () {
   if (this.unit() == "International") {
-    this.numberFrom /= 2237;
-    this.numberTo /= 2237;
+    this.numberFrom /= 2.237;
+    this.numberTo /= 2.237;
   }
 };
 WindPrediction.prototype.convertToMS = function () {
   if (this.unit() == "US") {
-    this.numberFrom *= 2237;
-    this.numberTo *= 2237;
+    this.numberFrom *= 2.237;
+    this.numberTo *= 2.237;
   }
 };
 
@@ -381,8 +391,12 @@ PrecipitationPrediction.prototype.types = function () {
   return this.types;
 };
 PrecipitationPrediction.prototype.matches = function (data) {
-  if (this.typesValue.indexOf(data.precipitationType()) > -1) {
-    return true;
+  if (data instanceof Precipitation) {
+    if (this.typesValue.indexOf(data.precipitationType()) > -1) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
     return false;
   }
@@ -435,12 +449,12 @@ Wind.prototype.direction = function () {
 };
 Wind.prototype.convertToMPH = function () {
   if (this.unit() == "International") {
-    this.weatherDataValue *= 2237;
+    this.weatherDataValue *= 2.237;
   }
 };
 Wind.prototype.convertToMS = function () {
   if (this.unit() == "US") {
-    this.weatherDataValue /= 2237;
+    this.weatherDataValue /= 2.237;
   }
 };
 
@@ -480,6 +494,15 @@ Temperature.prototype.convertToC = function () {
   }
 };
 
+//
+//
+//
+//
+//
+//
+//
+//Program Test
+//create dummy data
 let weatherData = [
   new Temperature("2000-01-01T02:00:00", "Horsens", "type1", "US", 200),
   new Temperature("2000-01-02T02:00:00", "Vejle", "type2", "US", 150),
@@ -513,7 +536,14 @@ let weatherPrediction = [
     1000,
     100
   ),
-  new Temperature("2000-01-02T02:00:00", "Vejle", "type2", "US", 600, 300),
+  new TemperaturePrediction(
+    "2000-01-02T02:00:00",
+    "Vejle",
+    "type2",
+    "US",
+    600,
+    300
+  ),
   new PrecipitationPrediction(
     "2000-01-03T02:00:00",
     "Arhus",
@@ -553,61 +583,88 @@ let weatherPrediction = [
 ];
 let weatherForecast = new WeatherForecast(weatherPrediction);
 
-console.log(weatherPrediction[0].to());
+//Display weather history data with 3 filters
+weatherHistory.setCurrentPlace("Alborg");
+weatherHistory.setCurrentType("type4");
+//Date Interval input: yyyy-mm-dd
+weatherHistory.setCurrentPeriod(new DateInterval("1990-02-01", "2010-02-01"));
 
-// predictionArray = [];
-// predictionArray.push(
-//   new WeatherPrediction("2000-01-01T02:00:00", "place1", "type1", "unit1", 5, 1)
-// );
-// predictionArray.push(
-//   new WeatherPrediction("2010-01-02T02:00:00", "place2", "type2", "unit2", 5, 1)
-// );
-// predictionArray.push(
-//   new WeatherPrediction("2000-01-03T02:00:00", "place3", "type3", "unit3", 5, 1)
-// );
-// predictionArray.push(
-//   new WeatherPrediction("2000-01-04T02:00:00", "place4", "type4", "unit4", 5, 1)
-// );
-// test = new WeatherForecast(predictionArray);
+//display filtered data
+console.log(
+  "\nweather history data with filters: place - " +
+    weatherHistory.getCurrentPlace() +
+    ", type - " +
+    weatherHistory.getCurrentType() +
+    ", period - " +
+    weatherHistory.getCurrentPeriod().from() +
+    " : " +
+    weatherHistory.getCurrentPeriod().to()
+);
+console.log(weatherHistory.data());
 
-// test.setCurrentPeriod(new DateInterval("1999-01-01", "2020-01-01"));
-// console.log(test.getCurrentPeriod().contains(predictionArray[1].time()));
+//Display weather forecast data with 3 filters
+weatherForecast.setCurrentPlace("Horsens");
+weatherForecast.setCurrentType("type1");
+//Date Interval input: yyyy-mm-dd
+weatherForecast.setCurrentPeriod(new DateInterval("1990-02-01", "2010-02-01"));
 
-// a = new DateInterval("1990-01-01", "2020-01-01");
-// console.log(predictionArray[1].time());
-// console.log(a);
-// console.log(a.contains(new Date("2010-01-02T00:00:00.000Z")));
+//display filtered data
+console.log(
+  "\nweather forecast data with filters: place - " +
+    weatherForecast.getCurrentPlace() +
+    ", type - " +
+    weatherForecast.getCurrentType() +
+    ", period - " +
+    weatherForecast.getCurrentPeriod().from() +
+    " : " +
+    weatherForecast.getCurrentPeriod().to()
+);
+console.log(weatherForecast.data());
 
-// test.setCurrentPlace("place2");
-// test.setCurrentType("type2");
-// test.setCurrentPeriod(new DateInterval("2000-01-01", "2020-01-01"));
-// console.log(predictionArray[1].time());
-// test2 = new DateInterval("1999-01-01", "2020-01-01");
-// console.log(test.getCurrentPeriod());
-// console.log(test.data());
-// console.log(test2.contains("2010-01-02"));
+weatherHistory.clearCurrentPlace();
+weatherHistory.clearCurrentType();
+weatherHistory.clearCurrentPeriod();
 
-// arr = [
-//   new WeatherPrediction(
-//     "time",
-//     "place",
-//     "type",
-//     "unit",
-//     "numberTo",
-//     "numbeFrom"
-//   ),
-//   new WeatherPrediction(
-//     "time",
-//     "place",
-//     "type",
-//     "unit",
-//     "numberTo",
-//     "numbeFrom"
-//   ),
-// ];
+weatherForecast.clearCurrentPlace();
+weatherForecast.clearCurrentType();
+weatherForecast.clearCurrentPeriod();
 
-// test = new WeatherForecast(arr);
-// console.log(test.getCurrentPlace());
+// check matches methods
+console.log(
+  "Matching 1st elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 2nd elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[1].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 5th elemet of weather forecast with 5th element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[4].matches(weatherHistory.data()[4])
+);
+console.log(
+  "Matching 3rd elemet of weather forecast with element 5th of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[2].matches(weatherHistory.data()[4])
+);
 
-// test = new Date(2020, 11, 17);
-// console.log(test);
+//converstion method:
+console.log(
+  "\nunit of the first element of weather history: " +
+    weatherHistory.data()[0].unit()
+);
+
+//converting
+weatherHistory.convertToInternationalUnits();
+
+console.log(
+  "\nunit of the first element of weather history after conversion: " +
+    weatherHistory.data()[0].unit()
+);
