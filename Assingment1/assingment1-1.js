@@ -1,781 +1,726 @@
-// 1PREDICTIONS
+//GENERAL
+//DateInterval
+function DateInterval(from, to) {
+  return {
+    fromValue: from,
+    toValue: to,
 
-function DateInterval (from, to) {
-
-    return {
-        from () {
-            return from;
-        } ,
-
-        to () {
-            return to;
-        },
-
-        contains(date) {
-            if (date > from && date < to) {
-                console.log ('it is in the range');
-                return true;
-            }
-        }
-    }
+    from() {
+      return this.fromValue;
+    },
+    to() {
+      return this.toValue;
+    },
+    contains(date) {
+      if (date > this.fromValue && date < this.toValue) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+  };
 }
 
-
-from = new Date (2020, 08, 15);
-to = new Date (2020, 09, 25);
-
-myDateInterval = new DateInterval(from, to);
-// console.log (myDateInterval.contains(new Date()));
-
-
-
-function Event(options) {
-
-    function time() {return options.time}
-    return {
-        timevalue: options.time,  
-        time
-    }
-}
-
+//DataType
 function DataType(options) {
-    return {
-        typeValue: options.type,
-        unitValue: options.unit,
-        type() {return options.type},
-        unit() { return options.unit},
-        setUnit(unit) {
-            this.unitValue = unit;
-        }
-    }
+  return {
+    typeValue: options.type,
+    unitValue: options.unit,
+    type() {
+      return this.typeValue;
+    },
+    unit() {
+      return this.unitValue;
+    },
+    setUnit(unit) {
+      this.unitValue = unit;
+    },
+  };
 }
 
+//Event
+function Event(options) {
+  return {
+    timeValue: options.time,
+    placeValue: options.place,
+    time() {
+      return this.timeValue;
+    },
+    place() {
+      return this.placeValue;
+    },
+  };
+}
 
+// PREDICTIONS
 
-
+//WeatherPrediction
 function WeatherPrediction(options) {
+  return {
+    ...Event(options),
+    ...DataType(options),
+    fromValue: options.from,
+    toValue: options.to,
 
-    return {
-
-        ...Event(options),
-
-        ...DataType(options),  
-
-        from : options.from,
-        to : options.to,
-
-        to () { return options.to; },
-
-        from () { return options.from; },
-
-
-    }
+    matches(weatherData) {
+      if (
+        weatherData.value() < this.to() &&
+        weatherData.value() > this.from()
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    to() {
+      return this.toValue;
+    },
+    setTo(n) {
+      this.toValue = n;
+    },
+    from() {
+      return this.fromValue;
+    },
+    setFrom(n) {
+      this.fromValue = n;
+    },
+  };
 }
 
+//TemperaturePrediction
+function TemperaturePrediction(time, place, type, unit, to, from) {
+  const options = { time, place, type, unit, from, to };
 
-// ev1 = new Event('11:30', 'Horsens');
-// dt1= new DataType('type', 'europeUnit');
+  return {
+    ...WeatherPrediction(options),
 
-wp1 = WeatherPrediction(from, to, 'type', 'europeUnit', '11:30', 'Horsens');
+    convertToUSUnits() {
+      this.convertToF();
+    },
+    convertToF() {
+      if (this.unit() == "EU") {
+        this.setFrom((this.from() * 9) / 5 + 32);
+        this.setTo((this.to() * 9) / 5 + 32);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToC();
+    },
+    convertToC() {
+      if (this.unit() == "US") {
+        this.setFrom(((this.from() - 32) * 5) / 9);
+        this.setTo(((this.to() - 32) * 5) / 9);
+      }
+    },
+  };
+}
 
+//PrecipitationPrediction
+function PrecipitationPrediction(time, place, type, unit, to, from, types) {
+  const options = { time, place, type, unit, to, from, types };
 
+  return {
+    ...WeatherPrediction(options),
+    typesValue: types,
 
-
-function TemperaturePrediction (time, place, type, unit, from, to) {
-    const options = {time, place, type, unit, from, to};
-    
-    return {
-
-        ...WeatherPrediction(options),
-
-        matches(weatherData) {
-            if ( 
-                // weatherData.value() == value  &&
-                 weatherData.value() > from &&
-                 weatherData.value() < to &&
-                 weatherData.time() == time &&  
-                 weatherData.place() == place &&
-                 weatherData.type() == type &&
-                 weatherData.unit() == unit ) 
-            {
-                return true
-            } else {
-                return false
-            }
-        
-        },
-       
-        convertToF() {
-            if (unit != 'US') {
-                from = (from * 9/5 + 32);
-                to = (to * 9/5 + 32);
-                type = 'US';
-
-            } 
-        },
-
-        convertToInternationalUnits() {
-            this.convertToC();
-        },
-
-        convertToC() {
-            if (unit != 'EU') {
-                from  = (from - 32) / (9/5);
-                to = (to - 32) / (9/5);
-                type = 'EU';
-            } 
+    types() {
+      return this.typesValue;
+    },
+    matches(weatherData) {
+      if (typeof weatherData.precipitationType == "function") {
+        if (this.typesValue.indexOf(weatherData.precipitationType()) > -1) {
+          return true;
+        } else {
+          return false;
         }
-    }
+      } else {
+        return false;
+      }
+    },
+    convertToUSUnits() {
+      this.convertToInches();
+    },
+    convertToInches() {
+      if (this.unit() == "EU") {
+        this.setFrom(this.from() / 25.4);
+        this.setTo(this.to() / 25.4);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToMM();
+    },
+    convertToMM() {
+      if (this.unit() == "US") {
+        this.setFrom(this.from() * 25.4);
+        this.setTo(this.to() * 25.4);
+      }
+    },
+  };
 }
 
+function WindPrediction(time, place, type, unit, to, from, directions) {
+  const options = { time, place, type, unit, to, from };
 
-//'types' - is array
-function PrecipitationPrediction (time, place, type, unit, from, to, types) {
+  return {
+    ...WeatherPrediction(options),
+    directionsValue: directions,
 
-    
-    const options = {time, place, type, unit, from, to, types};
-
-    return {
-
-        ...WeatherPrediction(options),
-
-        types() {
-            return types;
-        },
-
-        matches (weatherData) {
-            if ( 
-                 types.includes(weatherData.value) &&
-                 weatherData.value() > from &&
-                 weatherData.value() < to &&
-                 weatherData.time() == time &&
-                 weatherData.place() == place &&
-                 weatherData.type() == type &&
-                 weatherData.unit() == unit &&
-                 types.includes(weatherData.precipitationType) ) 
-            {
-                return true
-            } else {
-                return false
-            }
-        
-        },
-
-
-        convertToInches() {
-            if (unit != 'US') {
-                from = (from * 25.4);
-                to = (to * 25.4);
-                type = 'US';
-            }
-        },
-
-        convertToInternationalUnits() {
-        
-            this.convertToMM();
-        },
-
-        convertToMM() {
-            if (unit != 'EU') {
-                from  = (from / 25.4);
-                to = (to / 25.4 );
-                type = 'EU'
-            } 
-        }
-    }
+    directions() {
+      return this.directionsValue;
+    },
+    matches(weatherData) {
+      if (this.directionsValue.indexOf(weatherData.direction()) > -1) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    convertToUSUnits() {
+      this.convertToMPH();
+    },
+    convertToMPH() {
+      if (this.unit() == "EU") {
+        this.setFrom(this.from() / 2.237);
+        this.setTo(this.to() / 2.237);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToMS();
+    },
+    convertToMS() {
+      if (this.unit() == "US") {
+        this.setFrom(this.from() * 2.237);
+        this.setTo(this.to() * 2.237);
+      }
+    },
+  };
 }
 
-//'directions' - is array
-function WindPrediction (time ,place, type, unit, from, to, directions) {
-    const options = {time ,place, type, unit, from, to};
+//CloudCoveragePrediction
+function CloudCoveragePrediction(time, place, type, unit, to, from) {
+  const options = { time, place, type, unit, to, from };
 
-    return {
-        ...WeatherPrediction(options),
-
-        directions() {
-            return directions
-        },
-
-        matches(weatherData) {
-            if (
-                 weatherData.value() > from &&
-                 weatherData.value() < to &&
-                 weatherData.time() == time &&
-                 weatherData.place() == place &&
-                 weatherData.type() == type &&
-                 weatherData.unit() == unit &&
-                 directions.includes(weatherData.direction)  ) 
-            {
-                return true
-            } else {
-                return false
-            }
-        
-        },
-
-        convertToUSUnits() {
-            this.convertToMPH();
-        },
-
-        convertToMPH() {
-            if (unit != 'US') {
-                to = (to  * 2.23694);
-                from = (from * 2.23694);
-            
-            }
-        },
-
-        convertToInternationalUnits() {
-            this.convertToMS();
-        },
-
-        convertToMS() {
-            if (unit != 'EU') {
-                from = (from * 2.23694);
-                to = (to * 2.23694);
-                type = 'EU'
-
-            } 
-        }
-    }
+  return {
+    ...WeatherPrediction(options),
+  };
 }
 
+//WeatherForecast
+function WeatherForecast(data) {
+  return {
+    dataValue: data,
+    currentPlace: null,
+    currentType: null,
+    currentPeriod: null,
 
-tp = TemperaturePrediction('25', from, to, 'type', 'EU', '11:30', 'Horsens');
-
-
-    
-
-function WeatherForecast (data) {
-
-    const displayDataWithSpecificPlace = (array) => {
-
-        let filteredArray = [];
-        array.forEach(element => {
-            if (element.place() == this.currentPlace ) {
-                filteredArray.push (element);
-            }
-
+    setCurrentPlace(currentPlaceName) {
+      this.currentPlace = currentPlaceName;
+    },
+    getCurrentPlace() {
+      return this.currentPlace;
+    },
+    clearCurrentPlace() {
+      this.currentPlace = null;
+    },
+    setCurrentType(currentTypeName) {
+      this.currentType = currentTypeName;
+    },
+    getCurrentType() {
+      return this.currentType;
+    },
+    clearCurrentType() {
+      this.currentType = null;
+    },
+    setCurrentPeriod(currentPeriod) {
+      this.currentPeriod = currentPeriod;
+    },
+    getCurrentPeriod() {
+      return this.currentPeriod;
+    },
+    clearCurrentPeriod() {
+      this.currentPeriod = null;
+    },
+    convertToUSUnits() {
+      if (this.dataValue != null) {
+        this.dataValue.forEach((element) => {
+          if (element.unit() == "EU") {
+            element.convertToUSUnits();
+            element.setUnit("US");
+          }
         });
-        return filteredArray
-    }
-
-    const displayDataWithSpecificType = (array) => {
-        let filteredArray = [];
-        array.forEach(element => {
-            if (element.type() == this.currentType ) {
-                filteredArray.push (element);
-            }
-
+      }
+    },
+    convertToInternationalUnits() {
+      if (this.dataValue != null) {
+        this.dataValue.forEach((element) => {
+          if (element.unit() == "US") {
+            element.convertToInternationalUnits();
+            element.setUnit("EU");
+          }
         });
-        return filteredArray
-    }
-
-    const displayDataWithSpecificPeriod = (array) => {
-        let filteredArray = [];
-        array.forEach(element => {
-            if (currentPeriod.contains( element.time() ) ) {
-                filteredArray.push (element);
-            }
-
-        });
-        return filteredArray;
-    }
-
-    return {
-        data: data,
-
-        //Place
-        setCurrentPlace(currentPlaceName) {
-            currentPlace = currentPlaceName;
-        },
-
-        getCurrentPlace() {
-           if  (currentPlace != null ) {
-                return currentPlace
-           }
-        },
-        
-        clearCurrentPlace() {
-            currentPlace = null;
-        },
-
-
-        // Type
-        setCurrentType(currentTypeName) {
-            currentType = currentTypeName;
-        },
-
-        getCurrentType() {
-            if (currentType != null) {
-                return currentType;
-            }
-        },
-        
-        clearCurrentType() {
-            currentType = null;
-        },
-
-
-        //Period
-        setCurrentPeriod(currentPeriod) {
-            currentPeriod = currentPeriod;
-        },
-
-        getCurrentPeriod() {
-            if (currentPeriod != null) {
-                return (currentPeriod);
-            } 
-        },
-        
-        clearCurrentPeriod() {
-            currentPeriod = null;
-        },
-
-        
-        convertToUSUnits() {
-            //use weatherPredictions-> temp predictions convert to F()
-            if (data != null){
-                data.forEach(element => {
-                    element.convertToUSUnits()
-                    if (element.unit() == 'EU') {
-                        element.setUnit('US');
-                    }
-                   
-                });
-            }
-        },
-        
-        convertToInternationalUnits() {
-            console.log("it comes")
-            if (this.data != null){
-                this.data.forEach(element => {
-                    element.convertToInternationalUnits();
-                    if (element.unit() == 'US') {
-                        element.setUnit('EU');
-                    }
-                });
-            }
-        },
-
-        add(data) {
-            data = data
-        },
-
-        data() {
-
-            filteredArray = data;
-            
-            if (this.currentPlace != null) { displayDataWithSpecificPlace(filteredArray) } 
-            if (this.currentType != null) { displayDataWithSpecificType(filteredArray) }
-            if (this.currentPeriod != null) { displayDataWithSpecificPeriod(filteredArray) }
-            
-            return filteredArray;
+      }
+    },
+    displayDataWithSpecificPlace(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (element.place() == this.currentPlace) {
+          filteredArray.push(element);
         }
+      });
+      return filteredArray;
+    },
+    displayDataWithSpecificType(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (element.type() == this.currentType) {
+          filteredArray.push(element);
+        }
+      });
+      return filteredArray;
+    },
+    displayDataWithSpecificPeriod(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (this.currentPeriod.contains(element.time())) {
+          filteredArray.push(element);
+        }
+      });
+      return filteredArray;
+    },
+    add(data) {
+      this.dataValue.concat(data);
+    },
+    data() {
+      filterArray = this.dataValue;
 
-    }
+      if (this.currentPlace != null) {
+        filterArray = this.displayDataWithSpecificPlace(filterArray);
+      }
+      if (this.currentType != null) {
+        filterArray = this.displayDataWithSpecificType(filterArray);
+      }
+      if (this.currentPeriod != null) {
+        filterArray = this.displayDataWithSpecificPeriod(filterArray);
+      }
+      return filterArray;
+    },
+  };
 }
 
-
-
-
-
-
-arr = []
-wf = WeatherForecast(arr);
-wf.setCurrentPlace('Alabama');
-// console.log('sweet home - ' ,wf. getCurrentPlace());
-
-
-
-// 1DATA
-
-
+// WEATHER DATA
+//WeatherData
 function WeatherData(options) {
+  return {
+    ...Event(options),
+    ...DataType(options),
+    weatherDataValue: options.value,
 
-    return { 
-        ...Event(options),
-
-        ...DataType(options),  
-
-        value() {
-            return options.value;
-        }    
-
-    }
+    value() {
+      return this.weatherDataValue;
+    },
+    setValue(v) {
+      this.weatherDataValue = v;
+    },
+  };
 }
 
+//Temperature
+function Temperature(time, place, type, unit, value) {
+  const options = { value, type, unit, time, place };
 
+  return {
+    ...WeatherData(options),
 
-function Temperature (time, place, type, unit, value) {
-    const options = {value, type, unit, time, place};
-
-    return {
-        valueValue: value,
-
-        value() { return value},
-        ...WeatherData(options),
-       
-        convertToUSUnits () {
-            this.convertToF();
-        },
-
-        convertToF() {
-            if (unit != 'US') {
-                this.valueValue = (this.valueValue * 9/5 + 32);
-    
-            } 
-        },
-        
-        convertToInternationalUnits () {
-            this.convertToC();
-        },
-
-        convertToC() {
-            if (unit != 'EU') {
-                this.valueValue = (this.valueValue - 32) / (9/5);
-            } 
-        
-        }
-    }
+    convertToUSUnits() {
+      this.convertToF();
+    },
+    convertToF() {
+      if (this.unit() == "EU") {
+        this.setValue((this.value() * 9) / 5 + 32);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToC();
+    },
+    convertToC() {
+      if (this.unit() == "US") {
+        this.setValue(((this.value() - 32) * 5) / 9);
+      }
+    },
+  };
 }
 
+//Precipitation
+function Precipitation(time, place, type, unit, value, precipitationType) {
+  const options = { precipitationType, type, unit, time, place };
 
-function Precipitation (time, place, type, unit, value, precipitationType) {
-    
-    const options = { precipitationType, type, unit, time, place};
+  return {
+    ...WeatherData(options),
+    precipitationTypeValue: precipitationType,
 
-    return {
-
-        valueValue: value,
-        
-        value() { return value},
-
-        
-        ...WeatherPrediction(options),
-
-        precipitationType() {
-            return precipitationType;
-        },
-
-
-        convertToUSUnits() {
-            this.convertToInches();
-        },
-        
-        convertToInches() {
-            if (unit != 'US') {
-                this.valueValue = (this.valueValue * 25.4);
-            }
-        },
-
-        convertToInternationalUnits() {
-            this.convertToMM();
-        },
-
-        convertToMM() {
-            if (unit != 'EU') {
-                this.valueValue = (this.valueValue / 25.4);
-            } 
-        }
-    }
+    precipitationType() {
+      return this.precipitationTypeValue;
+    },
+    convertToUSUnits() {
+      this.convertToInches();
+    },
+    convertToInches() {
+      if (this.unit() == "EU") {
+        this.setValue(this.value() / 25.4);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToMM();
+    },
+    convertToMM() {
+      if (this.unit() == "US") {
+        this.setValue(this.value() * 25.4);
+      }
+    },
+  };
 }
 
+//Wind
+function Wind(time, place, type, unit, value, direction) {
+  const options = { time, place, type, unit, value, direction };
 
+  return {
+    ...WeatherData(options),
+    directionValue: direction,
 
-function Wind (time, place, type, unit, value, direction) {
-    
-    const options = {time, place, type, unit, value, direction};
-
-    return {
-
-        valueValue: value,
-
-        value() { return value},
-
-        ...WeatherPrediction(options),
-
-        direction() {
-            return direction;
-        },
-
-        convertToUSUnits() {
-            this.convertToMPH();
-        },
-
-        convertToMPH() {
-            if (unit != 'US') {
-                this.valueValue = (this.valueValue  * 2.23694);
-            }
-        },
-
-        convertToInternationalUnits(){
-            this.convertToMS();
-        },
-
-        convertToMS() {
-            if (unit != 'EU') {
-                this.valueValue  = (this.valueValue  / 2.23694);
-            } 
-        }
-    }
+    direction() {
+      return this.directionValue;
+    },
+    convertToUSUnits() {
+      this.convertToMPH();
+    },
+    convertToMPH() {
+      if (this.unit() == "EU") {
+        this.setValue(this.value() * 2.237);
+      }
+    },
+    convertToInternationalUnits() {
+      this.convertToMS();
+    },
+    convertToMS() {
+      if (this.unit() == "US") {
+        this.setValue(this.value() / 2.237);
+      }
+    },
+  };
 }
 
-prec = new Precipitation (2, 'precipitationType1', 'data-type', 'EU', new Date(), 'Horsens' );
-// console.log ('prec.value ', prec.value());
+//CloudCoverage
+function CloudCoveragePrediction(time, place, type, unit, value) {
+  const options = { time, place, type, unit, value };
 
+  return {
+    ...WeatherData(options),
+  };
+}
 
-
+//WeatherHistory
 function WeatherHistory(weatherData) {
+  return {
+    weatherDataValue: weatherData,
+    currentPlace: null,
+    currentType: null,
+    currentPeriod: null,
 
-    const displayDataWithSpecificPlace = (array) => {
-
-        let filteredArray = [];
-        array.forEach(element => {
-            if (element.place() == this.currentPlace ) {
-                filteredArray.push (element);
-            }
-
+    setCurrentPlace(currentPlaceName) {
+      this.currentPlace = currentPlaceName;
+    },
+    getCurrentPlace() {
+      return this.currentPlace;
+    },
+    clearCurrentPlace() {
+      this.currentPlace = null;
+    },
+    setCurrentType(currentTypeName) {
+      this.currentType = currentTypeName;
+    },
+    getCurrentType() {
+      return this.currentType;
+    },
+    clearCurrentType() {
+      this.currentType = null;
+    },
+    setCurrentPeriod(currentPeriod) {
+      this.currentPeriod = currentPeriod;
+    },
+    getCurrentPeriod() {
+      return this.currentPeriod;
+    },
+    clearCurrentPeriod() {
+      this.currentPeriod = null;
+    },
+    convertToUSUnits() {
+      if (weatherDataValue != null) {
+        this.weatherDataValue.forEach((element) => {
+          if (element.unit() == "EU") {
+            element.convertToUSUnits();
+            element.setUnit("US");
+          }
         });
-        return filteredArray
-    }
-
-    const displayDataWithSpecificType = (array) => {
-        let filteredArray = [];
-        array.forEach(element => {
-            if (element.type() == this.currentType ) {
-                filteredArray.push (element);
-            }
-
+      }
+    },
+    convertToInternationalUnits() {
+      if (this.weatherDataValue != null) {
+        this.weatherDataValue.forEach((element) => {
+          if (element.unit() == "US") {
+            element.convertToInternationalUnits();
+            element.setUnit("EU");
+          }
         });
-        return filteredArray
-    }
-
-    const displayDataWithSpecificPeriod = (array) => {
-        let filteredArray = [];
-        array.forEach(element => {
-            if (currentPeriod.contains( element.time() ) ) {
-                filteredArray.push (element);
-            }
-
-        });
-        return filteredArray;
-    }
-
-
-    return {
-        weatherData: weatherData,
-
-        //Place
-        setCurrentPlace(currentPlaceName) {
-            currentPlace = currentPlaceName;
-        },
-
-        getCurrentPlace() {
-            if (currentPlace != null) {
-                return (currentPlace);
-            } 
-        },
-        
-        clearCurrentPlace() {
-            currentPlace = null;
-        },
-
-
-        // Type
-        setCurrentType(currentTypeName) {
-            currentType = currentTypeName;
-        },
-
-        getCurrentType() {
-            if (currentType != null) {
-               return (currentType);
-            } 
-        },
-        
-        clearCurrentType() {
-            currentType = null;
-        },
-       
-        //Period
-        setCurrentPeriod(currentPeriod) {
-            currentPeriod = currentPeriod;
-        },
-
-        getCurrentPeriod() {
-            if (currentPeriod != null) {
-                return (currentPeriod);
-            }
-        },
-        
-        clearCurrentPeriod() {
-            currentPeriod = null;
-        },
-
-        
-        convertToUSUnits() {
-        console.log("call");
-            if (weatherData != null){
-                weatherData.forEach(element => {
-                    console.log('comes here2');
-
-                    element.convertToUSUnits();
-
-                    if (element.unit() == 'EU') {
-                        element.setUnit('US');
-                    }
-
-                });
-            }
-        },
-        
-        convertToInternationalUnits() {
-            console.log('graraa');
-            if (this.weatherData != null){
-               
-                this.weatherData.forEach(element => {
-                   
-                        element.convertToInternationalUnits();
-
-                        if (element.unit() == 'US') {
-                            element.setUnit('EU');
-                        }
-                   
-                });
-            }
-        },
-
-        add(weatherData) {
-            weatherData = weatherData;
-        },
-
-        data () {
-
-            filteredArray = weatherData;
-            
-            if (this.currentPlace != null) { filterArray = displayDataWithSpecificPlace(filteredArray) } 
-            if (this.currentType != null) { filterArray = displayDataWithSpecificType(filteredArray) }
-            if (this.currentPeriod != null) { filterArray = displayDataWithSpecificPeriod(filteredArray) }
-            
-            return filteredArray;
+      }
+    },
+    displayDataWithSpecificPlace(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (element.place() == this.currentPlace) {
+          filteredArray.push(element);
         }
+      });
+      return filteredArray;
+    },
+    displayDataWithSpecificType(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (element.type() == this.currentType) {
+          filteredArray.push(element);
+        }
+      });
+      return filteredArray;
+    },
+    displayDataWithSpecificPeriod(array) {
+      let filteredArray = [];
+      array.forEach((element) => {
+        if (this.currentPeriod.contains(element.time())) {
+          filteredArray.push(element);
+        }
+      });
+      return filteredArray;
+    },
+    add(weatherData) {
+      this.weatherDataValue.concat(weatherData);
+    },
+    data() {
+      filterArray = this.weatherDataValue;
 
-    }
+      if (this.currentPlace != null) {
+        filterArray = this.displayDataWithSpecificPlace(filterArray);
+      }
+      if (this.currentType != null) {
+        filterArray = this.displayDataWithSpecificType(filterArray);
+      }
+      if (this.currentPeriod != null) {
+        filterArray = this.displayDataWithSpecificPeriod(filterArray);
+      }
+
+      return filterArray;
+    },
+  };
 }
 
-value = new Date()
-// console.log (value);
-
-
-val = new Date(2020, 10, 1, 12, 0, 0, 0)
-// console.log (val.getMonth());
-
-
-
-// tempt = new Temperature("2000-01-01T02:00:00", "Horsens", "type1", "US", 200);
-// console.log ("", tempt );
-
-
-
-// function test(val) {
-
-//     return {
-//         val: val,
-//     }
-// }
-
-// temp = new test ("aaa");
-// console.log (temp);
-
-
-
+//
+//
+//
+//
+//
+//
+//
 //Program Test
+//create dummy data
 let weatherData = [
-    new Temperature("2000-01-01T02:00:00", "Horsens", "type1", "US", 200),
-    new Temperature("2000-01-02T02:00:00", "Vejle", "type2", "US", 150),
-    new Precipitation(
-      "2000-01-03T02:00:00",
-      "Arhus",
-      "type3",
-      "US",
-      500,
-      "precipitationType1"
-    ),
-    new Precipitation(
-      "2000-01-04T02:00:00",
-      "Alborg",
-      "type4",
-      "US",
-      600,
-      "precipitationType2"
-    ),
-    new Wind("2000-01-05T02:00:00", "Kolding", "type5", "US", 300, "East"),
-    new Wind("2000-01-06T02:00:00", "Billund", "type6", "US", 350, "West"),
-  ];
+  new Temperature(
+    new Date("2000-01-01T02:00:00"),
+    "Horsens",
+    "type1",
+    "US",
+    200
+  ),
+  new Temperature(new Date("2000-01-02T02:00:00"), "Vejle", "type2", "US", 150),
+  new Precipitation(
+    new Date("2000-01-03T02:00:00"),
+    "Arhus",
+    "type3",
+    "US",
+    500,
+    "precipitationType1"
+  ),
+  new Precipitation(
+    new Date("2000-01-04T02:00:00"),
+    "Alborg",
+    "type4",
+    "US",
+    600,
+    "precipitationType2"
+  ),
+  new Wind(
+    new Date("2000-01-05T02:00:00"),
+    "Kolding",
+    "type5",
+    "US",
+    300,
+    "East"
+  ),
+  new Wind(
+    new Date("2000-01-06T02:00:00"),
+    "Billund",
+    "type6",
+    "US",
+    350,
+    "West"
+  ),
+];
 
-  
-  
+let weatherPrediction = [
+  new TemperaturePrediction(
+    new Date("2000-01-01T02:00:00"),
+    "Horsens",
+    "type1",
+    "US",
+    1000,
+    100
+  ),
+  new TemperaturePrediction(
+    new Date("2000-01-02T02:00:00"),
+    "Vejle",
+    "type2",
+    "US",
+    600,
+    300
+  ),
+  new PrecipitationPrediction(
+    new Date("2000-01-03T02:00:00"),
+    "Arhus",
+    "type3",
+    "US",
+    700,
+    400,
+    ["precipitationType1", "precipitationType5"]
+  ),
+  new PrecipitationPrediction(
+    new Date("2000-01-04T02:00:00"),
+    "Alborg",
+    "type4",
+    "US",
+    800,
+    400,
+    ["precipitationType2", "precipitationType7"]
+  ),
+  new WindPrediction(
+    new Date("2000-01-05T02:00:00"),
+    "Kolding",
+    "type5",
+    "US",
+    500,
+    300,
+    ["East", "South"]
+  ),
+  new WindPrediction(
+    new Date("2000-01-06T02:00:00"),
+    "Billund",
+    "type6",
+    "US",
+    600,
+    250,
+    ["West", "North"]
+  ),
+];
+let weatherForecast = new WeatherForecast(weatherPrediction);
+let weatherHistory = new WeatherHistory(weatherData);
 
-//   function TemperaturePrediction (time, place, type, unit, from, to) {
-  let weatherPrediction = [
-    new TemperaturePrediction(
-      "2000-01-01T02:00:00",
-      "Horsens",
-      "type1",
-      "US",
-      1000,
-      100
-    ),
-    new TemperaturePrediction(
-      "2000-01-02T02:00:00",
-      "Vejle",
-      "type2",
-      "US",
-      600,
-      300
-    ),
-    new PrecipitationPrediction(
-      "2000-01-03T02:00:00",
-      "Arhus",
-      "type3",
-      "US",
-      700,
-      400,
-      ["precipitationType1", "precipitationType5"]
-    ),
-    new PrecipitationPrediction(
-      "2000-01-04T02:00:00",
-      "Alborg",
-      "type4",
-      "US",
-      800,
-      400,
-      ["precipitationType2", "precipitationType7"]
-    ),
-    new WindPrediction(
-      "2000-01-05T02:00:00",
-      "Kolding",
-      "type5",
-      "US",
-      500,
-      300,
-      ["East", "South"]
-    ),
-    new WindPrediction(
-      "2000-01-06T02:00:00",
-      "Billund",
-      "type6",
-      "US",
-      600,
-      250,
-      ["West", "North"]
-    ),
-  ];
+//Display weather history data with 3 filters
+weatherHistory.setCurrentPlace("Alborg");
+weatherHistory.setCurrentType("type4");
+weatherHistory.setCurrentPeriod(
+  new DateInterval(
+    new Date("1990-02-01T02:00:00"),
+    new Date("2010-02-01T02:00:00")
+  )
+);
+//display filtered data
+console.log(
+  "\nweather history data with filters: place - " +
+    weatherHistory.getCurrentPlace() +
+    ", type - " +
+    weatherHistory.getCurrentType() +
+    ", period - " +
+    weatherHistory.getCurrentPeriod().from() +
+    " : " +
+    weatherHistory.getCurrentPeriod().to()
+);
+console.log(weatherHistory.data());
 
-//   let weatherForecast = new WeatherForecast(weatherPrediction);
-  let weatherHistory = new WeatherHistory(weatherData);
-  weatherHistory.convertToInternationalUnits();
-  console.log ( "!!", weatherHistory.data());
+//Display weather forecast data with 3 filters
+weatherForecast.setCurrentPlace("Horsens");
+weatherForecast.setCurrentType("type1");
+//Date Interval input: yyyy-mm-dd
+weatherForecast.setCurrentPeriod(
+  new DateInterval(
+    new Date("1990-02-01T02:00:00"),
+    new Date("2010-02-01T02:00:00")
+  )
+);
 
-//   console.log ("aa", weatherHistory.data()[0].value;
-//   console.log(weatherPrediction)
+//display filtered data
+console.log(
+  "\nweather forecast data with filters: place - " +
+    weatherForecast.getCurrentPlace() +
+    ", type - " +
+    weatherForecast.getCurrentType() +
+    ", period - " +
+    weatherForecast.getCurrentPeriod().from() +
+    " : " +
+    weatherForecast.getCurrentPeriod().to()
+);
+console.log(weatherForecast.data());
+
+weatherHistory.clearCurrentPlace();
+weatherHistory.clearCurrentType();
+weatherHistory.clearCurrentPeriod();
+
+weatherForecast.clearCurrentPlace();
+weatherForecast.clearCurrentType();
+weatherForecast.clearCurrentPeriod();
+
+// check matches methods
+console.log(
+  "Matching 1st elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 2nd elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[1].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 5th elemet of weather forecast with 5th element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[4].matches(weatherHistory.data()[4])
+);
+console.log(
+  "Matching 3rd elemet of weather forecast with element 5th of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[2].matches(weatherHistory.data()[4])
+);
+
+//converstion method:
+console.log(
+  "\nunit of the first element of weather history: " +
+    weatherHistory.data()[0].unit()
+);
+
+//converting
+weatherHistory.convertToInternationalUnits();
+
+console.log(
+  "\nunit of the first element of weather history after conversion: " +
+    weatherHistory.data()[0].unit()
+);

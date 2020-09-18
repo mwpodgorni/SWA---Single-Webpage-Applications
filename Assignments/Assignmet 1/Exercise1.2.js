@@ -1,3 +1,5 @@
+//GENERAL
+//DateInterval
 class DateInterval {
   constructor(from, to) {
     //required input date format: "yyyy-mm-dd"
@@ -21,7 +23,7 @@ class DateInterval {
   }
 }
 
-//DataType class
+//DataType
 function DataType(type, unit) {
   this.typeValue = type;
   this.unitValue = unit;
@@ -38,7 +40,7 @@ DataType.prototype = {
   },
 };
 
-//Event class
+//Event
 function Event(time, place) {
   //required input time format: "yyyy-mm-ddThh:mm:ss"
   time = time + ".000Z";
@@ -53,6 +55,150 @@ Event.prototype = {
     return this.placeValue;
   },
 };
+
+//PREDICTIONS
+
+//WeatherPrediction
+function WeatherPrediction(time, place, type, unit, numberTo, numberFrom) {
+  Event.call(this, time, place);
+  DataType.call(this, type, unit);
+  this.numberTo = numberTo;
+  this.numberFrom = numberFrom;
+}
+//mix Event prototype with DataType prototype
+WeatherPrediction.prototype = Object.create(Event.prototype);
+Object.assign(WeatherPrediction.prototype, DataType.prototype);
+//add  function to WeatherData prototype
+WeatherPrediction.prototype.matches = function (data) {
+  if (data.value() < this.to() && data.value() > this.from()) {
+    return true;
+  } else {
+    return false;
+  }
+};
+WeatherPrediction.prototype.to = function () {
+  return this.numberTo;
+};
+WeatherPrediction.prototype.setTo = function (n) {
+  this.numberTo = n;
+};
+WeatherPrediction.prototype.from = function () {
+  return this.numberFrom;
+};
+WeatherPrediction.prototype.setFrom = function (n) {
+  this.numberFrom = n;
+};
+
+//TemperaturePrediction
+function TemperaturePrediction(time, place, type, unit, numberTo, numberFrom) {
+  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
+}
+TemperaturePrediction.prototype = Object.create(WeatherPrediction.prototype);
+TemperaturePrediction.prototype.convertToF = function () {
+  if (this.unit() == "International") {
+    this.setFrom((this.from() * 9) / 5 + 32);
+    this.setTo((this.to() * 9) / 5 + 32);
+  }
+};
+TemperaturePrediction.prototype.convertToC = function () {
+  if (this.unit() == "US") {
+    this.setFrom(((this.from() - 32) * 5) / 9);
+    this.setTo(((this.to() - 32) * 5) / 9);
+  }
+};
+
+//PrecipitationPrediction class
+function PrecipitationPrediction(
+  time,
+  place,
+  type,
+  unit,
+  numberTo,
+  numberFrom,
+  types
+) {
+  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
+  this.typesValue = types;
+}
+PrecipitationPrediction.prototype = Object.create(WeatherPrediction.prototype);
+PrecipitationPrediction.prototype.types = function () {
+  return this.types;
+};
+PrecipitationPrediction.prototype.matches = function (data) {
+  if (data instanceof Precipitation) {
+    if (this.typesValue.indexOf(data.precipitationType()) > -1) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+PrecipitationPrediction.prototype.convertToInches = function () {
+  if (this.unit() == "International") {
+    this.setFrom(this.from() / 25.4);
+    this.setTo(this.to() / 25.4);
+  }
+};
+PrecipitationPrediction.prototype.convertToMM = function () {
+  if (this.unit() == "US") {
+    this.setFrom(this.from() * 25.4);
+    this.setTo(this.to() * 25.4);
+  }
+};
+
+//WindPrediction
+function WindPrediction(
+  time,
+  place,
+  type,
+  unit,
+  numberTo,
+  numberFrom,
+  directions
+) {
+  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
+  this.directionsValue = directions;
+}
+WindPrediction.prototype = Object.create(WeatherPrediction.prototype);
+WindPrediction.prototype.directions = function () {
+  return this.directionsValue;
+};
+WindPrediction.prototype.matches = function (data) {
+  if (data instanceof Wind) {
+    if (this.directionsValue.indexOf(data.direction()) > -1) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+};
+WindPrediction.prototype.convertToMPH = function () {
+  if (this.unit() == "International") {
+    this.setFrom(this.from() / 2.237);
+    this.setTo(this.to() / 2.237);
+  }
+};
+WindPrediction.prototype.convertToMS = function () {
+  if (this.unit() == "US") {
+    this.setFrom(this.from() * 2.237);
+    this.setTo(this.to() * 2.237);
+  }
+};
+//CloudCoveragePrediciton
+function CloudCoveragePrediction(
+  time,
+  place,
+  type,
+  unit,
+  numberTo,
+  numberFrom
+) {
+  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
+}
 
 class WeatherForecast {
   constructor(data) {
@@ -116,9 +262,7 @@ class WeatherForecast {
       }
     });
   }
-  add(data) {
-    this.weatherPredictionData.concat(data);
-  }
+
   checkCurrentPlaceFilter(data) {
     if (this.currentPlace != null) {
       let filteredData = [];
@@ -158,6 +302,9 @@ class WeatherForecast {
       return data;
     }
   }
+  add(data) {
+    this.weatherPredictionData.concat(data);
+  }
   data() {
     let filterData = this.weatherPredictionData;
     filterData = this.checkCurrentPlaceFilter(filterData);
@@ -167,31 +314,8 @@ class WeatherForecast {
   }
 }
 
-function WeatherPrediction(time, place, type, unit, numberTo, numberFrom) {
-  Event.call(this, time, place);
-  DataType.call(this, type, unit);
-  this.numberTo = numberTo;
-  this.numberFrom = numberFrom;
-}
-//mix Event prototype with DataType prototype
-WeatherPrediction.prototype = Object.create(Event.prototype);
-Object.assign(WeatherPrediction.prototype, DataType.prototype);
-//add  function to WeatherData prototype
-WeatherPrediction.prototype.matches = function (data) {
-  if (data.value() < this.to() && data.value() > this.from()) {
-    return true;
-  } else {
-    return false;
-  }
-};
-WeatherPrediction.prototype.to = function () {
-  return this.numberTo;
-};
-WeatherPrediction.prototype.from = function () {
-  return this.numberFrom;
-};
-
-//WeatherData class
+//WEATHER DATA
+//WeatherData
 function WeatherData(time, place, type, unit, value) {
   Event.call(this, time, place);
   DataType.call(this, type, unit);
@@ -205,7 +329,73 @@ Object.assign(WeatherData.prototype, DataType.prototype);
 WeatherData.prototype.value = function () {
   return this.weatherDataValue;
 };
+WeatherData.prototype.setValue = function (v) {
+  this.weatherDataValue = v;
+};
 
+//Temperature
+function Temperature(time, place, type, unit, value) {
+  WeatherData.call(this, time, place, type, unit, value);
+}
+Temperature.prototype = Object.create(WeatherData.prototype);
+Temperature.prototype.convertToF = function () {
+  if (this.unit() == "International") {
+    this.setValue((this.value() * 9) / 5 + 32);
+  }
+};
+Temperature.prototype.convertToC = function () {
+  if (this.unit() == "US") {
+    this.setValue(((this.value() - 32) * 5) / 9);
+  }
+};
+
+//Precipitation
+function Precipitation(time, place, type, unit, value, precipitationType) {
+  WeatherData.call(this, time, place, type, unit, value);
+  this.precipitationTypeValue = precipitationType;
+}
+Precipitation.prototype = Object.create(WeatherData.prototype);
+Precipitation.prototype.precipitationType = function () {
+  return this.precipitationTypeValue;
+};
+Precipitation.prototype.convertToInches = function () {
+  if (this.unit() == "International") {
+    this.setValue(this.value() / 25.4);
+  }
+};
+Precipitation.prototype.convertToMM = function () {
+  if (this.unit() == "US") {
+    this.setValue(this.value() * 25.4);
+  }
+};
+
+//Wind
+function Wind(time, place, type, unit, value, direction) {
+  WeatherData.call(this, time, place, type, unit, value);
+  this.directionValue = direction;
+}
+Wind.prototype = Object.create(WeatherData.prototype);
+Wind.prototype.direction = function () {
+  return this.directionValue;
+};
+Wind.prototype.convertToMPH = function () {
+  if (this.unit() == "International") {
+    this.setValue(this.value() * 2.237);
+  }
+};
+Wind.prototype.convertToMS = function () {
+  if (this.unit() == "US") {
+    this.setValue(this.value() / 2.237);
+  }
+};
+
+//CloudCoverage
+function CloudCoverage(time, time, place, type, unit, value) {
+  WeatherData.call(this, time, place, type, unit, value);
+}
+CloudCoverage.prototype = Object.create(WeatherData.prototype);
+
+//WeatherHistory
 class WeatherHistory {
   constructor(data) {
     this.weatherData = data;
@@ -269,9 +459,6 @@ class WeatherHistory {
       }
     });
   }
-  add(data) {
-    this.weatherData.concat(data);
-  }
   checkCurrentPlaceFilter(data) {
     if (this.currentPlace != null) {
       let filteredData = [];
@@ -311,6 +498,9 @@ class WeatherHistory {
       return data;
     }
   }
+  add(data) {
+    this.weatherData.concat(data);
+  }
   data() {
     let filterData = this.weatherData;
     filterData = this.checkCurrentPlaceFilter(filterData);
@@ -319,180 +509,6 @@ class WeatherHistory {
     return filterData;
   }
 }
-
-//CloudCoveragePrediciton class
-function CloudCoveragePrediction(
-  time,
-  place,
-  type,
-  unit,
-  numberTo,
-  numberFrom
-) {
-  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
-}
-
-//WindPrediction class
-function WindPrediction(
-  time,
-  place,
-  type,
-  unit,
-  numberTo,
-  numberFrom,
-  directions
-) {
-  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
-  this.directionsValue = directions;
-}
-WindPrediction.prototype = Object.create(WeatherPrediction.prototype);
-WindPrediction.prototype.directions = function () {
-  return this.directionsValue;
-};
-WindPrediction.prototype.matches = function (data) {
-  if (data instanceof Wind) {
-    if (this.directionsValue.indexOf(data.direction()) > -1) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return false;
-  }
-};
-WindPrediction.prototype.convertToMPH = function () {
-  if (this.unit() == "International") {
-    this.numberFrom /= 2.237;
-    this.numberTo /= 2.237;
-  }
-};
-WindPrediction.prototype.convertToMS = function () {
-  if (this.unit() == "US") {
-    this.numberFrom *= 2.237;
-    this.numberTo *= 2.237;
-  }
-};
-
-//PrecipitationPrediction class
-function PrecipitationPrediction(
-  time,
-  place,
-  type,
-  unit,
-  numberTo,
-  numberFrom,
-  types
-) {
-  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
-  this.typesValue = types;
-}
-PrecipitationPrediction.prototype = Object.create(WeatherPrediction.prototype);
-PrecipitationPrediction.prototype.types = function () {
-  return this.types;
-};
-PrecipitationPrediction.prototype.matches = function (data) {
-  if (data instanceof Precipitation) {
-    if (this.typesValue.indexOf(data.precipitationType()) > -1) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return false;
-  }
-};
-PrecipitationPrediction.prototype.convertToInches = function () {
-  if (this.unit() == "International") {
-    this.numberFrom /= 25.4;
-    this.numberTo /= 25.4;
-  }
-};
-PrecipitationPrediction.prototype.convertToMM = function () {
-  if (this.unit() == "US") {
-    this.numberFrom *= 25.4;
-    this.numberTo *= 25.4;
-  }
-};
-
-//TemperaturePrediction class
-function TemperaturePrediction(time, place, type, unit, numberTo, numberFrom) {
-  WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
-}
-TemperaturePrediction.prototype = Object.create(WeatherPrediction.prototype);
-TemperaturePrediction.prototype.convertToF = function () {
-  if (this.unit() == "International") {
-    this.numberFrom = (this.numberFrom * 9) / 5 + 32;
-    this.numberTo = (this.numberTo * 9) / 5 + 32;
-  }
-};
-TemperaturePrediction.prototype.convertToC = function () {
-  if (this.unit() == "US") {
-    this.numberFrom = ((this.numberFrom - 32) * 5) / 9;
-    this.numberTo *= ((this.numberTo - 32) * 5) / 9;
-  }
-};
-
-//CloudCoverage class
-function CloudCoverage(time, time, place, type, unit, value) {
-  WeatherData.call(this, time, place, type, unit, value);
-}
-CloudCoverage.prototype = Object.create(WeatherData.prototype);
-
-//Wind class
-function Wind(time, place, type, unit, value, direction) {
-  WeatherData.call(this, time, place, type, unit, value);
-  this.directionValue = direction;
-}
-Wind.prototype = Object.create(WeatherData.prototype);
-Wind.prototype.direction = function () {
-  return this.directionValue;
-};
-Wind.prototype.convertToMPH = function () {
-  if (this.unit() == "International") {
-    this.weatherDataValue *= 2.237;
-  }
-};
-Wind.prototype.convertToMS = function () {
-  if (this.unit() == "US") {
-    this.weatherDataValue /= 2.237;
-  }
-};
-
-//Precipitation class
-function Precipitation(time, place, type, unit, value, precipitationType) {
-  WeatherData.call(this, time, place, type, unit, value);
-  this.precipitationTypeValue = precipitationType;
-}
-Precipitation.prototype = Object.create(WeatherData.prototype);
-Precipitation.prototype.precipitationType = function () {
-  return this.precipitationTypeValue;
-};
-Precipitation.prototype.convertToInches = function () {
-  if (this.unit() == "International") {
-    this.value /= 25.4;
-  }
-};
-Precipitation.prototype.convertToMM = function () {
-  if (this.unit() == "US") {
-    this.value *= 25.4;
-  }
-};
-
-//Temperature class
-function Temperature(time, place, type, unit, value) {
-  WeatherData.call(this, time, place, type, unit, value);
-}
-Temperature.prototype = Object.create(WeatherData.prototype);
-Temperature.prototype.convertToF = function () {
-  if (this.unit() == "International") {
-    this.value = (this.value * 9) / 5 + 32;
-  }
-};
-Temperature.prototype.convertToC = function () {
-  if (this.unit() == "US") {
-    this.value = ((this.value - 32) * 5) / 9;
-  }
-};
 
 //
 //
@@ -525,7 +541,6 @@ let weatherData = [
   new Wind("2000-01-05T02:00:00", "Kolding", "type5", "US", 300, "East"),
   new Wind("2000-01-06T02:00:00", "Billund", "type6", "US", 350, "West"),
 ];
-let weatherHistory = new WeatherHistory(weatherData);
 
 let weatherPrediction = [
   new TemperaturePrediction(
@@ -581,6 +596,7 @@ let weatherPrediction = [
     ["West", "North"]
   ),
 ];
+let weatherHistory = new WeatherHistory(weatherData);
 let weatherForecast = new WeatherForecast(weatherPrediction);
 
 //Display weather history data with 3 filters
