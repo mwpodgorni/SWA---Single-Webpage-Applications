@@ -62,10 +62,11 @@ function WeatherPrediction(options) {
     fromValue: options.from,
     toValue: options.to,
 
-    matches(weatherData) {
+
+    matchesValue(weatherData) {
       if (
-        weatherData.value() < this.to() &&
-        weatherData.value() > this.from()
+        weatherData.value() <= this.to() &&
+        weatherData.value() >= this.from()
       ) {
         return true;
       } else {
@@ -94,6 +95,20 @@ function TemperaturePrediction(time, place, type, unit, to, from) {
   return {
     ...WeatherPrediction(options),
 
+    matches(weatherData) {
+      if (
+      this.matchesValue(weatherData) &&
+      (String (weatherData.time()) == String (this.time())   ) &&
+      weatherData.place() == this.place() &&
+      weatherData.type() == this.type() &&
+      weatherData.unit() == this.unit()
+      ) {
+        return true
+      }
+      else {
+          return false
+      }
+    },
     convertToUSUnits() {
       this.convertToF();
     },
@@ -128,7 +143,15 @@ function PrecipitationPrediction(time, place, type, unit, to, from, types) {
     },
     matches(weatherData) {
       if (typeof weatherData.precipitationType == "function") {
-        if (this.typesValue.indexOf(weatherData.precipitationType()) > -1) {
+        if ( 
+            this.typesValue.indexOf(weatherData.precipitationType()) > -1 
+             && this.matchesValue(weatherData)
+             && (String (weatherData.time()) == String (this.time())   )
+             && weatherData.place() == this.place() 
+             && weatherData.type() == this.type()
+             && weatherData.unit() == this.unit()
+             
+        ) {
           return true;
         } else {
           return false;
@@ -169,7 +192,15 @@ function WindPrediction(time, place, type, unit, to, from, directions) {
       return this.directionsValue;
     },
     matches(weatherData) {
-      if (this.directionsValue.indexOf(weatherData.direction()) > -1) {
+      if (
+        this.directionsValue.indexOf(weatherData.direction()) > -1
+        && this.matchesValue(weatherData)
+        && weatherData.place() == this.place()
+        && weatherData.type() == this.type()
+        && weatherData.unit() == this.unit()
+        &&(String (weatherData.time()) == String (this.time())   ) 
+
+      ) {
         return true;
       } else {
         return false;
@@ -352,7 +383,7 @@ function Temperature(time, place, type, unit, value) {
 
 //Precipitation
 function Precipitation(time, place, type, unit, value, precipitationType) {
-  const options = { precipitationType, type, unit, time, place };
+  const options = {value, precipitationType, type, unit, time, place };
 
   return {
     ...WeatherData(options),
@@ -539,7 +570,13 @@ let weatherData = [
     "US",
     200
   ),
-  new Temperature(new Date("2000-01-02T02:00:00"), "Vejle", "type2", "US", 150),
+  new Temperature(
+      new Date("2000-01-02T02:00:00"), 
+      "Vejle", 
+      "type2", 
+      "US", 
+      150),
+
   new Precipitation(
     new Date("2000-01-03T02:00:00"),
     "Arhus",
@@ -592,13 +629,20 @@ let weatherPrediction = [
     300
   ),
   new PrecipitationPrediction(
+    // new Date("2000-01-03T02:00:00"),
+    // "Arhus",
+    // "type3",
+    // "US",
+    // 700,
+    // 400,
+    // ["precipitationType1", "precipitationType5"]
     new Date("2000-01-03T02:00:00"),
     "Arhus",
     "type3",
     "US",
-    700,
+    600,
     400,
-    ["precipitationType1", "precipitationType5"]
+    ["precipitationType1", "precipitationType7"]
   ),
   new PrecipitationPrediction(
     new Date("2000-01-04T02:00:00"),
@@ -685,13 +729,18 @@ weatherForecast.clearCurrentPlace();
 weatherForecast.clearCurrentType();
 weatherForecast.clearCurrentPeriod();
 
-// check matches methods
+// // check matches methods
 console.log(
   "Matching 1st elemet of weather forecast with 1st element of weather history:"
 );
 console.log(
   "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
 );
+
+console.log(
+    "data():" + weatherForecast.data()[2].matches(weatherHistory.data()[2])
+  );
+  
 console.log(
   "Matching 2nd elemet of weather forecast with 1st element of weather history:"
 );
@@ -704,6 +753,7 @@ console.log(
 console.log(
   "match:" + weatherForecast.data()[4].matches(weatherHistory.data()[4])
 );
+
 console.log(
   "Matching 3rd elemet of weather forecast with element 5th of weather history:"
 );
@@ -717,10 +767,10 @@ console.log(
     weatherHistory.data()[0].unit()
 );
 
-//converting
-weatherHistory.convertToInternationalUnits();
+// //converting
+// weatherHistory.convertToInternationalUnits();
 
-console.log(
-  "\nunit of the first element of weather history after conversion: " +
-    weatherHistory.data()[0].unit()
-);
+// console.log(
+//   "\nunit of the first element of weather history after conversion: " +
+//     weatherHistory.data()[0].unit()
+// );
