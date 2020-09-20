@@ -62,7 +62,6 @@ function WeatherPrediction(options) {
     fromValue: options.from,
     toValue: options.to,
 
-
     matchesValue(weatherData) {
       if (
         weatherData.value() <= this.to() &&
@@ -97,16 +96,15 @@ function TemperaturePrediction(time, place, type, unit, to, from) {
 
     matches(weatherData) {
       if (
-      this.matchesValue(weatherData) &&
-      (String (weatherData.time()) == String (this.time())   ) &&
-      weatherData.place() == this.place() &&
-      weatherData.type() == this.type() &&
-      weatherData.unit() == this.unit()
+        this.matchesValue(weatherData) &&
+        String(weatherData.time()) == String(this.time()) &&
+        weatherData.place() == this.place() &&
+        weatherData.type() == this.type() &&
+        weatherData.unit() == this.unit()
       ) {
-        return true
-      }
-      else {
-          return false
+        return true;
+      } else {
+        return false;
       }
     },
     convertToUSUnits() {
@@ -143,14 +141,13 @@ function PrecipitationPrediction(time, place, type, unit, to, from, types) {
     },
     matches(weatherData) {
       if (typeof weatherData.precipitationType == "function") {
-        if ( 
-            this.typesValue.indexOf(weatherData.precipitationType()) > -1 
-             && this.matchesValue(weatherData)
-             && (String (weatherData.time()) == String (this.time())   )
-             && weatherData.place() == this.place() 
-             && weatherData.type() == this.type()
-             && weatherData.unit() == this.unit()
-             
+        if (
+          this.typesValue.indexOf(weatherData.precipitationType()) > -1 &&
+          this.matchesValue(weatherData) &&
+          String(weatherData.time()) == String(this.time()) &&
+          weatherData.place() == this.place() &&
+          weatherData.type() == this.type() &&
+          weatherData.unit() == this.unit()
         ) {
           return true;
         } else {
@@ -193,13 +190,12 @@ function WindPrediction(time, place, type, unit, to, from, directions) {
     },
     matches(weatherData) {
       if (
-        this.directionsValue.indexOf(weatherData.direction()) > -1
-        && this.matchesValue(weatherData)
-        && weatherData.place() == this.place()
-        && weatherData.type() == this.type()
-        && weatherData.unit() == this.unit()
-        &&(String (weatherData.time()) == String (this.time())   ) 
-
+        this.directionsValue.indexOf(weatherData.direction()) > -1 &&
+        this.matchesValue(weatherData) &&
+        weatherData.place() == this.place() &&
+        weatherData.type() == this.type() &&
+        weatherData.unit() == this.unit() &&
+        String(weatherData.time()) == String(this.time())
       ) {
         return true;
       } else {
@@ -383,7 +379,7 @@ function Temperature(time, place, type, unit, value) {
 
 //Precipitation
 function Precipitation(time, place, type, unit, value, precipitationType) {
-  const options = {value, precipitationType, type, unit, time, place };
+  const options = { value, precipitationType, type, unit, time, place };
 
   return {
     ...WeatherData(options),
@@ -570,12 +566,7 @@ let weatherData = [
     "US",
     200
   ),
-  new Temperature(
-      new Date("2000-01-02T02:00:00"), 
-      "Vejle", 
-      "type2", 
-      "US", 
-      150),
+  new Temperature(new Date("2000-01-02T02:00:00"), "Vejle", "type2", "US", 150),
 
   new Precipitation(
     new Date("2000-01-03T02:00:00"),
@@ -736,11 +727,6 @@ console.log(
 console.log(
   "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
 );
-
-console.log(
-    "data():" + weatherForecast.data()[2].matches(weatherHistory.data()[2])
-  );
-  
 console.log(
   "Matching 2nd elemet of weather forecast with 1st element of weather history:"
 );
@@ -767,10 +753,10 @@ console.log(
     weatherHistory.data()[0].unit()
 );
 
-// //converting
-// weatherHistory.convertToInternationalUnits();
+//converting
+weatherHistory.convertToInternationalUnits();
 
-// console.log(
-//   "\nunit of the first element of weather history after conversion: " +
-//     weatherHistory.data()[0].unit()
-// );
+console.log(
+  "\nunit of the first element of weather history after conversion: " +
+    weatherHistory.data()[0].unit()
+);

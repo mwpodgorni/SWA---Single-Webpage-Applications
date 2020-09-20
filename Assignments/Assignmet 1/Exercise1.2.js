@@ -70,7 +70,7 @@ WeatherPrediction.prototype = Object.create(Event.prototype);
 Object.assign(WeatherPrediction.prototype, DataType.prototype);
 //add  function to WeatherData prototype
 WeatherPrediction.prototype.matches = function (data) {
-  if (data.value() < this.to() && data.value() > this.from()) {
+  if (data.value() <= this.to() && data.value() >= this.from()) {
     return true;
   } else {
     return false;
@@ -126,7 +126,14 @@ PrecipitationPrediction.prototype.types = function () {
 };
 PrecipitationPrediction.prototype.matches = function (data) {
   if (data instanceof Precipitation) {
-    if (this.typesValue.indexOf(data.precipitationType()) > -1) {
+    if (
+      this.typesValue.indexOf(data.precipitationType()) > -1 &&
+      this.matches(data) &&
+      String(weatherData.time()) == String(this.time()) &&
+      data.place() == this.place() &&
+      data.type() == this.type() &&
+      data.unit() == this.unit()
+    ) {
       return true;
     } else {
       return false;
@@ -167,7 +174,14 @@ WindPrediction.prototype.directions = function () {
 };
 WindPrediction.prototype.matches = function (data) {
   if (data instanceof Wind) {
-    if (this.directionsValue.indexOf(data.direction()) > -1) {
+    if (
+      this.directionsValue.indexOf(data.direction()) > -1 &&
+      this.matches(data) &&
+      data.place() == this.place() &&
+      data.type() == this.type() &&
+      data.unit() == this.unit() &&
+      String(data.time()) == String(this.time())
+    ) {
       return true;
     } else {
       return false;
