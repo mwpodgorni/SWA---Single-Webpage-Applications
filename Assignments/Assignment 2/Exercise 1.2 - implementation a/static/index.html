@@ -1,0 +1,612 @@
+<html>
+  <head>
+    <title>Assignment 2</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <style>
+        td {
+            padding: 10px;
+            max-width: 300px;
+            overflow-x: auto;
+            border: 1px solid black;
+            text-align: center;
+        }
+        table {
+            border: 1px solid black;
+            border-spacing: 0;
+        }
+        .card-body{
+          max-height: 400px;
+          overflow-y: auto;
+        }
+        
+    </style>
+    <script type="module">
+      window.init = function(){
+        allDataForTheLatestMeasurementOfEachKind();
+        minimumTemperatureForTheLast5Days();
+        maximumTemperatureForTheLast5Days();
+        totalPrecipitationForTheLast5Days();
+        averageWindSpeedForTheLast5Days();
+        dominantWindDirectionForTheLast5Days();
+        averageCloudCoverageForTheLast5Dats();
+        hourlyPredicitionsForTheNext24Hours();
+      }
+
+      function allDataForTheLatestMeasurementOfEachKind(){
+          var latestDataHorsens;
+          var latestDataArhus;
+          var latestDataCopenhagen;
+
+          const request1 = new XMLHttpRequest();
+          request1.open("GET", "http://localhost:8080/data/Horsens");
+          request1.onload=()=>{
+            var dataHorsens=JSON.parse(request1.responseText);
+            latestDataHorsens = getLatestData(dataHorsens);
+            displayDataInTable(latestDataHorsens,"latest-data");
+          }
+          request1.send(null);
+
+          const request2 = new XMLHttpRequest();
+          request2.open("GET", "http://localhost:8080/data/Aarhus");
+          request2.onload=()=>{
+            var dataArhus=JSON.parse(request2.responseText);
+            latestDataArhus = getLatestData(dataArhus); 
+            displayDataInTable(latestDataArhus,"latest-data");
+
+          }
+          request2.send(null);
+
+          const request3 = new XMLHttpRequest();
+          request3.open("GET", "http://localhost:8080/data/Copenhagen");
+          request3.onload=()=>{
+            var dataCopenhagen=JSON.parse(request3.responseText);
+            latestDataCopenhagen = getLatestData(dataCopenhagen);
+            displayDataInTable(latestDataCopenhagen,"latest-data");
+
+          }
+          request3.send(null);
+      }
+      function getLatestData(data){
+        var types=[];
+        data.forEach(element => {
+          if(!types.includes(element.type)){
+            types.push(element.type);
+          }
+        });
+        var latestData=[];
+        types.forEach(element => {
+          latestData.push({type:element, data:null})
+        });
+        data.forEach(element => {
+          latestData.forEach(e => {
+            if(e.type==element.type){
+              if(e.data==null){
+                e.data=element;
+              }else{
+                if(new Date(e.data.time)<new Date(element.time)){
+                  e.data=element;
+                }
+              }
+            }
+          });
+        });
+        return latestData;
+      }
+      
+      function minimumTemperatureForTheLast5Days(){
+        var minTempData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            minTempData = getMinimumTemperatureData(data);
+            displayDataInTable(minTempData,"min-temp-data");
+          }
+          request.send(null);
+      }
+      function getMinimumTemperatureData(data){
+        var cities = getCities(data);
+        var tempData=[];
+        cities.forEach(city=>{
+          tempData.push({place:city, data:null})
+        });
+        data.forEach(element=>{
+          if(element.type=="temperature"){
+            tempData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                if(e.data==null){
+                e.data=element;
+              }else{
+                if(e.data.value>element.value){
+                  e.data=element;
+                }
+              }
+              }
+            }
+          });
+          }
+        });
+        return tempData;
+      }
+
+      function maximumTemperatureForTheLast5Days(){
+        var maxTempData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            maxTempData = getMaximumTemperatureData(data);
+            displayDataInTable(maxTempData,"max-temp-data");
+          }
+          request.send(null);
+      }
+      function getMaximumTemperatureData(data){
+        var cities = getCities(data);
+        var tempData=[];
+        cities.forEach(city=>{
+          tempData.push({place:city, data:null})
+        });
+        data.forEach(element=>{
+          if(element.type=="temperature"){
+            tempData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                  if(e.data==null){
+                  e.data=element;
+                }else{
+                  if(e.data.value<element.value){
+                    e.data=element;
+                  }
+                }
+              }
+            }
+          });
+          }
+        });
+        return tempData;
+      }
+     
+      function totalPrecipitationForTheLast5Days(){
+        var precipitationData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            precipitationData = getPrecipitationData(data);
+            displayDataInTable(precipitationData,"precipitation-data");
+          }
+          request.send(null);
+      }
+      function getPrecipitationData(data){
+        var cities = getCities(data);
+        var precipitationData=[];
+        cities.forEach(city=>{
+          precipitationData.push({place:city, data:{type:null, time:null, place:null, value:null, unit:null, precipitation_type:[]}})
+        });
+        data.forEach(element=>{
+          if(element.type=="precipitation"){
+            precipitationData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                  if(e.data.type==null){
+                  e.data.type=element.type;
+                  e.data.time=null;
+                  e.data.place=element.place;
+                  e.data.value=element.value;
+                  e.data.unit=element.unit;
+                  e.data.precipitation_type.push(element.precipitation_type);
+                }else{
+                  e.data.value+=element.value;
+                  if(!e.data.precipitation_type.includes(element.precipitation_type)){
+                    e.data.precipitation_type.push(element.precipitation_type);
+                  }
+                  
+                }
+              }
+            }
+          });
+          }
+        });
+        precipitationData.forEach(element=>{
+          element.data.time="Last 5 days"
+        })
+        return precipitationData;
+      }
+
+      function averageWindSpeedForTheLast5Days(){
+        var windSpeedData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            windSpeedData = getWindSpeedData(data);
+            displayDataInTable(windSpeedData,"wind-speed-data");
+          }
+          request.send(null);
+      }
+      function getWindSpeedData(data){
+        var cities = getCities(data);
+        var windData=[];
+        cities.forEach(city=>{
+          windData.push({place:city,totalNumber:0, data:{type:null, time:null, place:null, value:null, direction:[]}})
+        });
+        data.forEach(element=>{
+          if(element.type=="wind speed"){
+            windData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                  if(e.data.type==null){
+                  e.data.type=element.type;
+                  e.data.time=null;
+                  e.data.place=element.place;
+                  e.data.value=element.value;
+                  e.data.unit=element.unit;
+                  e.data.direction.push(element.direction);
+                  e.totalNumber++;
+                }else{
+                  e.data.value+=element.value;
+                  if(!e.data.direction.includes(element.direction)){
+                    e.data.direction.push(element.direction);
+                  }
+                  e.totalNumber++;
+                }
+              }
+            }
+          });
+          }
+        });
+        windData.forEach(element=>{
+          element.data.value=element.data.value/element.totalNumber;
+          element.data.time="Last 5 days"
+        })
+        return windData;
+      }
+     
+      function dominantWindDirectionForTheLast5Days(){
+        var windDirectionData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            windDirectionData = getWindDirectionData(data);
+            displayDataInTable(windDirectionData,"wind-direction-data");
+          }
+          request.send(null);
+      }
+      function getWindDirectionData(data){
+        var cities = getCities(data);
+        var windData=[];
+        cities.forEach(city=>{
+          windData.push({place:city, data:{type:null, time:null, place:null, value:0, directions:new Map(), direction:null}})
+        });
+        data.forEach(element=>{
+          if(element.type=="wind speed"){
+            windData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                if(e.data.type==null){
+                  e.data.type=element.type;
+                  e.data.time=null;
+                  e.data.place=element.place;
+                  e.data.value++;
+                  e.data.unit=element.unit;
+                  e.data.directions.set(element.direction, 1);
+                }else{
+                  if(e.data.directions.has(element.direction)){
+                    e.data.directions.set(element.direction, e.data.directions.get(element.direction)+1)
+                    e.data.value++;
+                  }else{
+                    e.data.directions.set(element.direction, 1);
+                    e.data.value++;
+                  }
+                }
+              }
+            }
+          });
+          }
+        });
+        windData.forEach(element=>{
+          element.data.time="Last 5 days"
+          var keys=element.data.directions.keys();
+          var dominant=null;
+            for (var [key, value] of element.data.directions) {
+              if(dominant==null){
+                dominant={key:key, value:value};
+              }else{
+                if(dominant.value<value){
+                  dominant={key: key, value:value};
+                }
+              }
+            }
+          element.data.value=dominant.value/element.data.value;
+          element.data.direction=dominant.key;
+        })
+        return windData;
+      }
+     
+      function averageCloudCoverageForTheLast5Dats(){
+        var cloudCoverageData;
+        const request = new XMLHttpRequest();
+          request.open("GET", "http://localhost:8080/data");
+          request.onload=()=>{
+            var data=JSON.parse(request.responseText);
+            cloudCoverageData = getCloudCoverageData(data);
+            displayDataInTable(cloudCoverageData,"cloud-coverage-data");
+          }
+          request.send(null);
+      }
+      function getCloudCoverageData(data){
+        var cities = getCities(data);
+        var cloudData=[];
+        cities.forEach(city=>{
+          cloudData.push({place:city,totalNumber:0, data:{type:null, time:null, place:null, value:null}})
+        });
+        data.forEach(element=>{
+          if(element.type=="cloud coverage"){
+            cloudData.forEach(e=>{
+            if(e.place==element.place){
+              if(new Date(element.time)>new Date().getDate()-5){
+                  if(e.data.type==null){
+                  e.data.type=element.type;
+                  e.data.time=null;
+                  e.data.place=element.place;
+                  e.data.value=element.value;
+                  e.data.unit=element.unit;
+                  e.totalNumber++;
+                }else{
+                  e.data.value+=element.value;
+                  e.totalNumber++;
+                }
+              }
+            }
+          });
+          }
+        });
+        cloudData.forEach(element=>{
+          element.data.value=element.data.value/element.totalNumber;
+          element.data.time="Last 5 days"
+        })
+        return cloudData;
+      }
+     
+      function hourlyPredicitionsForTheNext24Hours(){
+          var predictionsDataHorsens;
+          var predictionsDataArhus;
+          var predictionsDataCopenhagen;
+      
+          const request1 = new XMLHttpRequest();
+          request1.open("GET", "http://localhost:8080/forecast/Horsens");
+          request1.onload=()=>{
+            var dataHorsens=JSON.parse(request1.responseText);
+            predictionsDataHorsens = getPredictionsData(dataHorsens);
+            displayPredictionsDataInTable(predictionsDataHorsens,"predictions-data");
+          }
+          request1.send(null);
+
+          const request2 = new XMLHttpRequest();
+          request2.open("GET", "http://localhost:8080/forecast/Aarhus");
+          request2.onload=()=>{
+            var dataArhus=JSON.parse(request2.responseText);
+            predictionsDataArhus = getPredictionsData(dataArhus); 
+            displayPredictionsDataInTable(predictionsDataArhus,"predictions-data");
+
+          }
+          request2.send(null);
+
+          const request3 = new XMLHttpRequest();
+          request3.open("GET", "http://localhost:8080/forecast/Copenhagen");
+          request3.onload=()=>{
+            var dataCopenhagen=JSON.parse(request3.responseText);
+            predictionsDataCopenhagen = getPredictionsData(dataCopenhagen);
+            displayPredictionsDataInTable(predictionsDataCopenhagen,"predictions-data");
+
+          }
+          request3.send(null);
+      } 
+      function getPredictionsData(data){
+        var predData=[];
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate()+1);
+        data.forEach(element => {
+          if(new Date(element.time)<tomorrow){
+            predData.push(element);
+          }
+        });
+        return predData
+      }
+
+      function displayDataInTable(data, tableId){
+        const document = window.document;
+        const table_body = document.getElementById(tableId);
+          data.forEach(element => {
+          const tr = table_body.appendChild(document.createElement('tr'));
+          tr.insertCell().appendChild(document.createTextNode(element.data.value));
+          tr.insertCell().appendChild(document.createTextNode(element.data.type));
+          tr.insertCell().appendChild(document.createTextNode(element.data.unit));
+          tr.insertCell().appendChild(document.createTextNode(element.data.time));
+          tr.insertCell().appendChild(document.createTextNode(element.data.place));
+          if(element.data.precipitation_type){
+            tr.insertCell().appendChild(document.createTextNode(element.data.precipitation_type));
+          }else{
+            tr.insertCell().appendChild(document.createTextNode("-"));
+          }
+          if(element.data.direction){
+            tr.insertCell().appendChild(document.createTextNode(element.data.direction));
+          }else{
+            tr.insertCell().appendChild(document.createTextNode("-"));
+          }
+          });
+      }
+      function getCities(data){
+        var cities =[];
+        data.forEach(element=>{
+          if(!cities.includes(element.place)){
+            cities.push(element.place);
+          }
+        });
+        return cities;
+      }
+      function displayPredictionsDataInTable(data, tableId){
+        const document = window.document;
+        const table_body = document.getElementById(tableId);
+          data.forEach(element => {
+          const tr = table_body.appendChild(document.createElement('tr'));
+          tr.insertCell().appendChild(document.createTextNode(element.type));
+          tr.insertCell().appendChild(document.createTextNode(element.time));
+          tr.insertCell().appendChild(document.createTextNode(element.place));
+          tr.insertCell().appendChild(document.createTextNode(element.from));
+          tr.insertCell().appendChild(document.createTextNode(element.to));
+          tr.insertCell().appendChild(document.createTextNode(element.unit));
+      });
+      }
+    </script>
+  </head>
+  <body onload="init()">
+    <div class="container text-center">
+      <h1 class="my-3">Exercise 1.2. Implementation a</h1>
+      <div class="accordion" id="accordion">
+      <div class="card">
+        <div class="card-header" id="headingOne">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+              All data for the latest measurement of each kind
+            </button>
+          </h2>
+        </div>
+        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='latest-data'></tbody>
+           </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingTwo">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+              Minimum temperature for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='min-temp-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingThree">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+              Maximum temperature for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='max-temp-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingFour">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
+              Total precipitation for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='precipitation-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingFive">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseFive" aria-expanded="true" aria-controls="collapseFive">
+              Average wind speed for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='wind-speed-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingSix">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseSix" aria-expanded="true" aria-controls="collapseSix">
+              Dominant wind direction for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseSix" class="collapse" aria-labelledby="headingSix" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Occurence %</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Dominant Direction</td></tr></thead>
+              <tbody id='wind-direction-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingSeven">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseSeven" aria-expanded="true" aria-controls="collapseSeven">
+              Average cloud coverage for the last 5 days
+            </button>
+          </h2>
+        </div>
+        <div id="collapseSeven" class="collapse" aria-labelledby="headingSeven" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Value</td><td>Type</td><td>Unit</td><td>Time</td><td>Place</td><td>Precipitation Type</td><td>Direction</td></tr></thead>
+              <tbody id='cloud-coverage-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" id="headingEight">
+          <h2 class="mb-0">
+            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseEight" aria-expanded="true" aria-controls="collapseEight">
+              Hourly predictions for the next 24 hours.
+            </button>
+          </h2>
+        </div>
+        <div id="collapseEight" class="collapse" aria-labelledby="headingEight" data-parent="#accordion">
+          <div class="card-body">
+            <table class="mx-auto">
+              <thead><tr><td>Type</td><td>Time</td><td>Place</td><td>From</td><td>To</td><td>Unit</td></tr></thead>
+              <tbody id='predictions-data'></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+  </body>
+</html>
