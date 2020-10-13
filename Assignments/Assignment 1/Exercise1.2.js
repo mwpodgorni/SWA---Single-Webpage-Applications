@@ -69,7 +69,7 @@ function WeatherPrediction(time, place, type, unit, numberTo, numberFrom) {
 WeatherPrediction.prototype = Object.create(Event.prototype);
 Object.assign(WeatherPrediction.prototype, DataType.prototype);
 //add  function to WeatherData prototype
-WeatherPrediction.prototype.matches = function (data) {
+WeatherPrediction.prototype.match = function (data) {
   if (data.value() <= this.to() && data.value() >= this.from()) {
     return true;
   } else {
@@ -94,6 +94,9 @@ function TemperaturePrediction(time, place, type, unit, numberTo, numberFrom) {
   WeatherPrediction.call(this, time, place, type, unit, numberTo, numberFrom);
 }
 TemperaturePrediction.prototype = Object.create(WeatherPrediction.prototype);
+TemperaturePrediction.prototype.matches = function (data) {
+  return this.match(data);
+}
 TemperaturePrediction.prototype.convertToF = function () {
   if (this.unit() == "International") {
     this.setFrom((this.from() * 9) / 5 + 32);
@@ -128,7 +131,7 @@ PrecipitationPrediction.prototype.matches = function (data) {
   if (data instanceof Precipitation) {
     if (
       this.typesValue.indexOf(data.precipitationType()) > -1 &&
-      this.matches(data) &&
+      this.match(data) &&
       String(weatherData.time()) == String(this.time()) &&
       data.place() == this.place() &&
       data.type() == this.type() &&
@@ -176,7 +179,7 @@ WindPrediction.prototype.matches = function (data) {
   if (data instanceof Wind) {
     if (
       this.directionsValue.indexOf(data.direction()) > -1 &&
-      this.matches(data) &&
+      this.match(data) &&
       data.place() == this.place() &&
       data.type() == this.type() &&
       data.unit() == this.unit() &&
@@ -276,7 +279,6 @@ class WeatherForecast {
       }
     });
   }
-
   checkCurrentPlaceFilter(data) {
     if (this.currentPlace != null) {
       let filteredData = [];
@@ -613,7 +615,7 @@ let weatherPrediction = [
 let weatherHistory = new WeatherHistory(weatherData);
 let weatherForecast = new WeatherForecast(weatherPrediction);
 
-//Display weather history data with 3 filters
+// Display weather history data with 3 filters
 weatherHistory.setCurrentPlace("Alborg");
 weatherHistory.setCurrentType("type4");
 //Date Interval input: yyyy-mm-dd
@@ -686,15 +688,15 @@ console.log(
 );
 
 //converstion method:
-console.log(
-  "\nunit of the first element of weather history: " +
-    weatherHistory.data()[0].unit()
-);
+// console.log(
+//   "\nunit of the first element of weather history: " +
+//     weatherHistory.data()[0].unit()
+// );
 
-//converting
-weatherHistory.convertToInternationalUnits();
+// //converting
+// weatherHistory.convertToInternationalUnits();
 
-console.log(
-  "\nunit of the first element of weather history after conversion: " +
-    weatherHistory.data()[0].unit()
-);
+// console.log(
+//   "\nunit of the first element of weather history after conversion: " +
+//     weatherHistory.data()[0].unit()
+// );
