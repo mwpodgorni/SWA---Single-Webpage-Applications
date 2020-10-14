@@ -572,12 +572,6 @@ console.log ("including", weatherHistory.including(weatherData));
 
 
 
-//Display weather forecast data with 3 filters
-// weatherForecast.setCurrentPlace("Horsens");
-// weatherForecast.setCurrentType("type1");
-//Date Interval input: yyyy-mm-dd
-// weatherForecast.setCurrentPeriod(new DateInterval("1990-02-01", "2010-02-01"));
-
 
 
 // check matches methods
