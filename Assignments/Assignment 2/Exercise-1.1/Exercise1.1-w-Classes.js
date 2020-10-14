@@ -103,10 +103,10 @@ TemperaturePrediction.prototype.matches = function (data) {
 }
 TemperaturePrediction.prototype.convertToF = function () {
   if (this.unit() == "International") {
-    return new TemperaturePrediction (this.time(), this.place(), this.type(), this.unit(), ((this.from() * 9) / 5 + 32 ) , ((this.to() * 9) / 5 + 32 )   )
+    return new TemperaturePrediction (this.time(), this.place(), this.type(), "US", ((this.from() * 9) / 5 + 32 ) , ((this.to() * 9) / 5 + 32 )   )
   }
   else {
-    return new TemperaturePrediction (this.time(), this.place(), this.type(), this.unit(), this.from() , this.to()  );
+    return new TemperaturePrediction (this.time(), this.place(), this.type(), "US", this.from() , this.to()  );
   }
 
 
@@ -157,7 +157,7 @@ PrecipitationPrediction.prototype.matches = function (data) {
 };
 PrecipitationPrediction.prototype.convertToInches = function () {
   if (this.unit() == "International") {
-    return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), (this.to() / 25.4), (this.from() / 25.4), this.types() );
+    return new PrecipitationPrediction(this.time(), this.place(), this.type(), "US", (this.to() / 25.4), (this.from() / 25.4), this.types() );
   }
   else {
     return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), this.to(), this.from(), this.types());
@@ -165,7 +165,7 @@ PrecipitationPrediction.prototype.convertToInches = function () {
 };
 PrecipitationPrediction.prototype.convertToMM = function () {
   if (this.unit() == "US") {
-    return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), (this.to() * 25.4), (this.from() * 25.4), this.types() );
+    return new PrecipitationPrediction(this.time(), this.place(), this.type(), "International", (this.to() * 25.4), (this.from() * 25.4), this.types() );
   }
   else {
     return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), this.to(), this.from(), this.types());
@@ -210,7 +210,7 @@ WindPrediction.prototype.matches = function (data) {
 };
 WindPrediction.prototype.convertToMPH = function () {
   if (this.unit() == "International") {
-    return new WindPrediction(this.time(), this.place(), this.type(), this.unit(), (this.to()/ 2.237) , (this.from()/ 2.237) , this.directions());
+    return new WindPrediction(this.time(), this.place(), this.type(), "US", (this.to()/ 2.237) , (this.from()/ 2.237) , this.directions());
   }
   else {
     return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), this.to(), this.from(), this.directions());
@@ -218,7 +218,7 @@ WindPrediction.prototype.convertToMPH = function () {
 };
 WindPrediction.prototype.convertToMS = function () {
   if (this.unit() == "US") {
-    return new WindPrediction(this.time(), this.place(), this.type(), this.unit(), (this.to() * 2.237) , (this.from() * 2.237) , this.directions());
+    return new WindPrediction(this.time(), this.place(), this.type(), "International", (this.to() * 2.237) , (this.from() * 2.237) , this.directions());
   }
   else {
     return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), this.to(), this.from(), this.directions());
@@ -266,7 +266,7 @@ class WeatherForecast {
             } else if (element instanceof TemperaturePrediction) {
                     temp = element.convertToF();
             }
-            temp.setUnit("US");
+            
       return temp;
   });
 
@@ -335,7 +335,7 @@ function Temperature(time, place, type, unit, value) {
 Temperature.prototype = Object.create(WeatherData.prototype);
 Temperature.prototype.convertToF = function () {
   if (this.unit() == "International") {
-    return new Temperature (this.time(), this.place(), this.type(), this.unit(), ((this.value() * 9) / 5 + 32 ))
+    return new Temperature (this.time(), this.place(), this.type(), "US", ((this.value() * 9) / 5 + 32 ))
   }
   else {
     return new Temperature (this.time(), this.place(), this.type(), this.unit(), this.value()  );
@@ -346,7 +346,7 @@ Temperature.prototype.convertToF = function () {
 };
 Temperature.prototype.convertToC = function () {
   if (this.unit() == "US") {
-    return new Temperature (this.time(), this.place(), this.type(), this.unit(), (((this.velue() - 32) * 5) / 9) )
+    return new Temperature (this.time(), this.place(), this.type(), "International", (((this.velue() - 32) * 5) / 9) )
   }
   else {
     return new Temperature (this.time(), this.place(), this.type(), this.unit(), this.value()  );
@@ -364,7 +364,7 @@ Precipitation.prototype.precipitationType = function () {
 };
 Precipitation.prototype.convertToInches = function () {
   if (this.unit() == "International") {
-    return new Precipitation(this.time(), this.place(), this.type(), this.unit(), (this.value() / 25.4), this.precipitationType() );
+    return new Precipitation(this.time(), this.place(), this.type(), "US", (this.value() / 25.4), this.precipitationType() );
   }
   else {
     return new Precipitation(this.time(), this.place(), this.type(), this.unit(), this.value(),  this.precipitationType() );
@@ -372,7 +372,7 @@ Precipitation.prototype.convertToInches = function () {
 };
 Precipitation.prototype.convertToMM = function () {
   if (this.unit() == "US") {
-    return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), (this.value() * 25.4), this.precipitationType()  );
+    return new PrecipitationPrediction(this.time(), this.place(), this.type(), "International", (this.value() * 25.4), this.precipitationType()  );
   }
   else {
     return new PrecipitationPrediction(this.time(), this.place(), this.type(), this.unit(), this.to(), this.from(),this.precipitationType() );
@@ -437,7 +437,7 @@ class WeatherHistory {
             } else if (element instanceof TemperaturePrediction) {
                     temp = element.convertToF();
             }
-            temp.setUnit("US");
+            // temp.setUnit("US");
       return temp;
   });
   }
@@ -575,45 +575,45 @@ console.log ("including", weatherHistory.including(weatherData));
 
 
 // check matches methods
-// console.log(
-//   "Matching 1st elemet of weather forecast with 1st element of weather history:"
-// );
-// console.log(
-//   "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
-// );
-// console.log(
-//   "Matching 2nd elemet of weather forecast with 1st element of weather history:"
-// );
-// console.log(
-//   "match:" + weatherForecast.data()[1].matches(weatherHistory.data()[0])
-// );
-// console.log(
-//   "Matching 5th elemet of weather forecast with 5th element of weather history:"
-// );
-// console.log(
-//   "match:" + weatherForecast.data()[4].matches(weatherHistory.data()[4])
-// );
-// console.log(
-//   "Matching 3rd elemet of weather forecast with element 5th of weather history:"
-// );
-// console.log(
-//   "match:" + weatherForecast.data()[2].matches(weatherHistory.data()[4])
-// );
+console.log(
+  "Matching 1st elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[0].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 2nd elemet of weather forecast with 1st element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[1].matches(weatherHistory.data()[0])
+);
+console.log(
+  "Matching 5th elemet of weather forecast with 5th element of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[4].matches(weatherHistory.data()[4])
+);
+console.log(
+  "Matching 3rd elemet of weather forecast with element 5th of weather history:"
+);
+console.log(
+  "match:" + weatherForecast.data()[2].matches(weatherHistory.data()[4])
+);
 
 
 
 
-//
-//converstion method:
-// console.log(
-//   "\nunit of the first element of weather history: " +
-//     weatherHistory.data()[0].unit()
-// );
 
-// //converting
-// weatherHistory.convertToInternationalUnits();
+// converstion method:
+console.log(
+  "\nunit of the first element of weather history: " +
+    weatherHistory.data()[0].unit()
+);
 
-// console.log(
-//   "\nunit of the first element of weather history after conversion: " +
-//     weatherHistory.data()[0].unit()
-// );
+//converting
+weatherHistory.convertToUSUnits();
+
+console.log(
+  "\nunit of the first element of weather history after conversion: " +
+    weatherHistory.data()[0].unit()
+);
