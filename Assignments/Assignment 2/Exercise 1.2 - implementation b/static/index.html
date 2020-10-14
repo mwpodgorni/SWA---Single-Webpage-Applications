@@ -71,6 +71,7 @@
                 e.data=element;
               }else{
                 if(new Date(e.data.time)<new Date(element.time)){
+                  // console.log("dates: "+new Date(e.data.time)<new Date(element.time))
                   e.data=element;
                 }
               }
@@ -359,45 +360,14 @@
               .then(res => res.map(r => r.json()))
               .then(r => Promise.all(r))
               .then(([dataHorsens, dataArhus, dataCopenhagen])=>{
-                predictionsDataHorsens = getLatestData(dataHorsens);
-                displayDataInTable(predictionsDataHorsens,"latest-data");
-                predictionsDataArhus = getLatestData(dataArhus); 
-                displayDataInTable(predictionsDataArhus,"latest-data");
-                predictionsDataCopenhagen = getLatestData(dataCopenhagen);
-                displayDataInTable(predictionsDataCopenhagen,"latest-data");
+                predictionsDataHorsens = getPredictionsData(dataHorsens);
+                displayPredictionsDataInTable(predictionsDataHorsens,"predictions-data");
+                predictionsDataArhus = getPredictionsData(dataArhus); 
+                displayPredictionsDataInTable(predictionsDataArhus,"predictions-data");
+                predictionsDataCopenhagen = getPredictionsData(dataCopenhagen);
+                displayPredictionsDataInTable(predictionsDataCopenhagen,"predictions-data");
               })
               .catch(console.error);
-
-
-
-          const request1 = new XMLHttpRequest();
-          request1.open("GET", "http://localhost:8080/forecast/Horsens");
-          request1.onload=()=>{
-            var dataHorsens=JSON.parse(request1.responseText);
-            predictionsDataHorsens = getPredictionsData(dataHorsens);
-            displayPredictionsDataInTable(predictionsDataHorsens,"predictions-data");
-          }
-          request1.send(null);
-
-          const request2 = new XMLHttpRequest();
-          request2.open("GET", "http://localhost:8080/forecast/Aarhus");
-          request2.onload=()=>{
-            var dataArhus=JSON.parse(request2.responseText);
-            predictionsDataArhus = getPredictionsData(dataArhus); 
-            displayPredictionsDataInTable(predictionsDataArhus,"predictions-data");
-
-          }
-          request2.send(null);
-
-          const request3 = new XMLHttpRequest();
-          request3.open("GET", "http://localhost:8080/forecast/Copenhagen");
-          request3.onload=()=>{
-            var dataCopenhagen=JSON.parse(request3.responseText);
-            predictionsDataCopenhagen = getPredictionsData(dataCopenhagen);
-            displayPredictionsDataInTable(predictionsDataCopenhagen,"predictions-data");
-
-          }
-          request3.send(null);
       } 
       function getPredictionsData(data){
         var predData=[];
