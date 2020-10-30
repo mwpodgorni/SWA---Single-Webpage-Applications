@@ -12,13 +12,9 @@ class DivInput extends React.Component {
   render() {
     return (
       <div>
-        {/* <div> */}
-              <label>Enter something: </label>
-              <textarea type="text" name="username" onChange={ (e) => this.setState({userInput: e.target.value}) } value={this.state.userInput} />
-              {/* </div> */}
-          {/* <div> */}
+            <label>Enter something: </label>
+            <textarea type="text" name="username" onChange={ (e) => this.setState({userInput: e.target.value}) } value={this.state.userInput} />
             <p>Input: {this.state.userInput}</p>
-          {/* </div> */}
     </div>
     )
   }
