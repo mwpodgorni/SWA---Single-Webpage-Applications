@@ -5,10 +5,10 @@
       <b-spinner
         class="my-5"
         variant="primary"
-        v-if="loadingStatusWeatherData == 'loading'"
+        v-if="!weatherData.length"
         label="Spinning"
       ></b-spinner>
-      <div v-if="loadingStatusWeatherData != 'loading'">
+      <div v-if="weatherData.length">
         <b-form inline class="my-2 mx-auto">
           <label class="mx-2" for="cities">Cities</label>
           <b-form-select
@@ -57,10 +57,10 @@
       <b-spinner
         class="my-5"
         variant="primary"
-        v-if="loadingStatusWeatherPredictions == 'loading'"
+        v-if="!weatherPredictions.length"
         label="Spinning"
       ></b-spinner>
-      <div v-if="loadingStatusWeatherPredictions != 'loading'">
+      <div v-if="weatherPredictions.length">
         <b-form inline class="my-2 mx-auto">
           <label class="mx-2" for="cities">Cities</label>
           <b-form-select
@@ -216,18 +216,30 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
+import WeatherDataClass from "./models/WeatherData";
+import WeatherPredictionsClass from "./models/WeatherPrediction";
 export default {
   name: "App",
   components: {},
   data() {
     return {
+      initialWeatherData: [],
+      weatherData: [],
+      weatherDataHeaders: [],
+      weatherDataFilters: {
+        cities: [],
+        timeStart: [],
+        timeEnd: [],
+      },
       weatherDataAppliedFilters: {
         city: null,
         timeStart: null,
         timeEnd: null,
       },
+      initialWeatherPredictions: [],
+      weatherPredictions: [],
+      weatherPredictionsHeaders: [],
+      weatherPredictionsFilters: { cities: [], timeStart: [], timeEnd: [] },
       weatherPredictionsAppliedFilters: {
         city: null,
         timeStart: null,
@@ -262,52 +274,150 @@ export default {
       dismissCountDownError: 0,
     };
   },
-  beforeCreate() {
-    this.$store.dispatch("fetchWeatherData");
-    this.$store.dispatch("fetchWeatherPredictions");
+  created() {
+    this.loadWeatherData();
+    this.loadPredictionsData();
   },
-  watch: {
-    dataReportStatus(newValue, oldValue) {
-      if (newValue == "sent") {
-        this.showSuccessAlert();
-        this.$store.dispatch("clearReportStatus");
-      }
-    },
-  },
-  computed: {
-    ...mapGetters({
-      loadingStatusWeatherData: "loadingStatusWeatherData",
-      weatherData: "getWeatherData",
-      weatherDataHeaders: "getWeatherDataHeaders",
-      weatherDataFilters: "getWeatherDataFilters",
-      dataReportStatus: "getDataReportStatus",
-      loadingStatusWeatherPredictions: "loadingStatusWeatherPredictions",
-      weatherPredictions: "getWeatherPredictions",
-      weatherPredictionsHeaders: "getWeatherPredictionsHeaders",
-      weatherPredictionsFilters: "getWeatherPredictionsFilters",
-    }),
-  },
+
   methods: {
     loadWeatherData() {
+      this.initialWeatherData = [];
+      this.weatherData = [];
       this.weatherDataAppliedFilters.city = null;
       this.weatherDataAppliedFilters.timeStart = null;
       this.weatherDataAppliedFilters.timeEnd = null;
-      this.$store.dispatch("fetchWeatherData");
+      const request = new XMLHttpRequest();
+      request.open("GET", "http://localhost:8080/data");
+      request.onload = () => {
+        var data = JSON.parse(request.responseText).map((element) => {
+          return new WeatherDataClass(element);
+        });
+        this.initialWeatherData = data;
+        this.weatherData = data;
+        this.setWeatherDataFilters(data);
+      };
+      request.send(null);
+    },
+    setWeatherDataHeaders(data) {
+      var headers = [];
+      var types = [];
+      data.forEach((element) => {
+        if (!types.includes(element.type)) {
+          Object.keys(element).forEach((key) => {
+            if (!headers.includes(key)) {
+              headers.push(key);
+            }
+          });
+          types.push(element.type);
+        }
+      });
+      this.weatherDataHeaders = headers;
+    },
+    setWeatherDataFilters(data) {
+      var cities = [{ text: "Choose...", value: null }];
+      data.forEach((element) => {
+        if (!cities.includes(element.place)) {
+          cities.push(element.place);
+        }
+      });
+      var dates = [{ text: "Choose...", value: null }];
+      data.forEach((element) => {
+        if (!dates.includes(element.time)) {
+          dates.push(element.time);
+        }
+      });
+      this.weatherDataFilters.cities = cities;
+      this.weatherDataFilters.timeStart = dates;
+      this.weatherDataFilters.timeEnd = dates;
+    },
+    applyDataFilters() {
+      this.weatherData = this.initialWeatherData;
+      if (this.weatherDataAppliedFilters.city) {
+        this.weatherData = this.weatherData.filter(
+          (element) => element.place == this.weatherDataAppliedFilters.city
+        );
+      }
+      if (this.weatherDataAppliedFilters.timeStart) {
+        this.weatherData = this.weatherData.filter(
+          (element) => element.time >= this.weatherDataAppliedFilters.timeStart
+        );
+      }
+      if (this.weatherDataAppliedFilters.timeEnd) {
+        this.weatherData = this.weatherData.filter(
+          (element) => element.time <= this.weatherDataAppliedFilters.timeEnd
+        );
+      }
     },
     loadPredictionsData() {
+      this.initialWeatherPredictions = [];
+      this.weatherPredictions = [];
       this.weatherPredictionsAppliedFilters.city = null;
       this.weatherPredictionsAppliedFilters.timeStart = null;
       this.weatherPredictionsAppliedFilters.timeEnd = null;
-      this.$store.dispatch("fetchWeatherPredictions");
+      const request = new XMLHttpRequest();
+      request.open("GET", "http://localhost:8080/forecast");
+      request.onload = () => {
+        var data = JSON.parse(request.responseText).map((element) => {
+          return new WeatherPredictionsClass(element);
+        });
+        this.initialWeatherPredictions = data;
+        this.weatherPredictions = data;
+        this.setWeatherPredictionsFilters(data);
+      };
+      request.send(null);
     },
-    applyDataFilters() {
-      this.$store.dispatch("filterWeatherData", this.weatherDataAppliedFilters);
+    setWeatherPredictionsHeaders(data) {
+      var headers = [];
+      var types = [];
+      data.forEach((element) => {
+        if (!types.includes(element.type)) {
+          Object.keys(element).forEach((key) => {
+            if (!headers.includes(key)) {
+              headers.push(key);
+            }
+          });
+          types.push(element.type);
+        }
+      });
+      this.weatherPredictionsHeaders = headers;
     },
-    applyPredictionsFilters() {
-      this.$store.dispatch(
-        "filterWeatherPredictions",
-        this.weatherPredictionsAppliedFilters
-      );
+    setWeatherPredictionsFilters(data) {
+      var cities = [{ text: "Choose...", value: null }];
+      data.forEach((element) => {
+        if (!cities.includes(element.place)) {
+          cities.push(element.place);
+        }
+      });
+      var dates = [{ text: "Choose...", value: null }];
+      data.forEach((element) => {
+        if (!dates.includes(element.time)) {
+          dates.push(element.time);
+        }
+      });
+      this.weatherPredictionsFilters.cities = cities;
+      this.weatherPredictionsFilters.timeStart = dates;
+      this.weatherPredictionsFilters.timeEnd = dates;
+    },
+    applyPredictionsFilters(data) {
+      this.weatherPredictions = this.initialWeatherPredictions;
+      if (this.weatherPredictionsAppliedFilters.city) {
+        this.weatherPredictions = this.weatherPredictions.filter(
+          (element) =>
+            element.place == this.weatherPredictionsAppliedFilters.city
+        );
+      }
+      if (this.weatherPredictionsAppliedFilters.timeStart) {
+        this.weatherPredictions = this.weatherPredictions.filter(
+          (element) =>
+            element.time >= this.weatherPredictionsAppliedFilters.timeStart
+        );
+      }
+      if (this.weatherPredictionsAppliedFilters.timeEnd) {
+        this.weatherPredictions = this.weatherPredictions.filter(
+          (element) =>
+            element.time <= this.weatherPredictionsAppliedFilters.timeEnd
+        );
+      }
     },
     reportData() {
       if (
@@ -339,7 +449,17 @@ export default {
             this.showErrorAlert();
           }
         }
-        this.$store.dispatch("sendDataReport", JSON.stringify(report));
+        let newItem = new WeatherDataClass(report);
+        const request = new XMLHttpRequest();
+        request.open("POST", "http://localhost:8080/data", true);
+        request.setRequestHeader("Content-type", "application/json");
+        var vm = this;
+        request.onload = function () {
+          if (request.status == 201) {
+            vm.showSuccessAlert();
+          }
+        };
+        request.send(JSON.stringify(newItem));
       } else {
         this.showErrorAlert();
       }

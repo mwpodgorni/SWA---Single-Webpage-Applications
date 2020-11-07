@@ -13,7 +13,7 @@ export default new Vuex.Store({
       timeStart: [],
       timeEnd: [],
     },
-    dataReportStatus: "bruh",
+    dataReportStatus: "empty",
     loadingStatusWeatherPredictions: "notLoading",
     initialWeatherPredictions: [],
     weatherPredictions: [],
@@ -215,7 +215,7 @@ export default new Vuex.Store({
       return state.dataReportStatus;
     },
     loadingStatusWeatherPredictions(state) {
-      return state.loadingStatusPredictionsData;
+      return state.loadingStatusWeatherPredictions;
     },
     getWeatherPredictions(state) {
       return state.weatherPredictions;
