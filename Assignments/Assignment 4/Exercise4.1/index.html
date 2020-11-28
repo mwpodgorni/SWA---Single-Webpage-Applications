@@ -18,42 +18,53 @@
       crossorigin="anonymous"
     ></script>
     <style></style>
-   
 
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 
+    <script type="module">
+      import {
+        map,
+        filter,
+        switchMapTo,
+        concatMap,
+        pairwise,
+        takeWhile,
+        first,
+        share,
+        switchMap,
+        take,
+        distinctUntilChanged,
+      } from "https://dev.jspm.io/rxjs@6/_esm2015/operators";
+      import { ajax } from "https://dev.jspm.io/rxjs@6/_esm2015/ajax";
+      import {
+        timer,
+        Observable,
+        Subject,
+        ReplaySubject,
+        from,
+        of,
+        range,
+        interval,
+        fromEvent,
+        BehaviorSubject,
+      } from "https://dev.jspm.io/rxjs@6/_esm2015";
 
-
-
-<script type="module">
-      import { map, filter, switchMapTo, concatMap, pairwise, takeWhile, first, share, switchMap, take, distinctUntilChanged} from 'https://dev.jspm.io/rxjs@6/_esm2015/operators';
-      import { ajax} from 'https://dev.jspm.io/rxjs@6/_esm2015/ajax';
-      import { timer, Observable, Subject, ReplaySubject, from, of, range, interval, fromEvent, BehaviorSubject, } from 'https://dev.jspm.io/rxjs@6/_esm2015'
-
-      const poll_url = url => interval(1000).pipe(concatMap( () => ajax.getJSON(url)));
+      const poll_url = (url) => interval(1000).pipe(concatMap(() => ajax.getJSON(url)));
 
       //get warnings arr only
-      const observable = poll_url('http://localhost:8080/warnings').pipe (map (res => res.warnings ));
+      const observable = poll_url("http://localhost:8080/warnings").pipe(map((res) => res.warnings));
 
       //checking for change, subscribing
       const sub = observable
-      .pipe(distinctUntilChanged((prev, curr ) => JSON.stringify(prev) === JSON.stringify(curr)))
-      .subscribe(
-          {
-              next: event => console.log (event),
-              error: error => console.log(error),
-              complete: () => console.log('complete!')
-      }
-      )
-      
-</script>
-
-
-
-
+        .pipe(distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)))
+        .subscribe({
+          next: (event) => console.log("event:", event),
+          error: (error) => console.log(error),
+          complete: () => console.log("complete!"),
+        });
+    </script>
 
     <script>
-
       // var warningsData = [];
       // var filteredData = [];
       // const ws = new WebSocket("ws://localhost:8090/warnings");
@@ -328,9 +339,7 @@
             <div class="card-body">
               <h5 class="card-title">Warnings</h5>
               <div style="max-height: 400px; overflow-y: auto;">
-                <ul class="list-group" id="warnings-list">
-                  
-                </ul>
+                <ul class="list-group" id="warnings-list"></ul>
               </div>
             </div>
           </div>
