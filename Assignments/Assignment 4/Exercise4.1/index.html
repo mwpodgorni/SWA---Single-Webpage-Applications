@@ -19,30 +19,40 @@
     ></script>
     <style></style>
    
-    <script  src="rxjsModule.js" type="text/javascript"> 
-    </script> 
-
-    <!-- <script type="text/javascript" src="./js/myjsfile.js"></script>   -->
-
-    <!-- <script >
-     console.log ("ne ponimaju")
-    </script> -->
-
 
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 
 
+
+
+<script type="module">
+      import { map, filter, switchMapTo, concatMap, pairwise, takeWhile, first, share, switchMap, take, distinctUntilChanged} from 'https://dev.jspm.io/rxjs@6/_esm2015/operators';
+      import { ajax} from 'https://dev.jspm.io/rxjs@6/_esm2015/ajax';
+      import { timer, Observable, Subject, ReplaySubject, from, of, range, interval, fromEvent, BehaviorSubject, } from 'https://dev.jspm.io/rxjs@6/_esm2015'
+
+      const poll_url = url => interval(1000).pipe(concatMap( () => ajax.getJSON(url)));
+
+      //get warnings arr only
+      const observable = poll_url('http://localhost:8080/warnings').pipe (map (res => res.warnings ));
+
+      //checking for change, subscribing
+      const sub = observable
+      .pipe(distinctUntilChanged((prev, curr ) => JSON.stringify(prev) === JSON.stringify(curr)))
+      .subscribe(
+          {
+              next: event => console.log (event),
+              error: error => console.log(error),
+              complete: () => console.log('complete!')
+      }
+      )
+      
+</script>
+
+
+
+
+
     <script>
-
-      // const poll_url = url => interval(100).pipe(concatMap(() => ajax.getJSON(url)));
-      // console.log ("this is aaaa start");
-
-      // const poll_something = () => 
-      // poll_url('http://localhost:8080/warnings')
-      // .pipe (map(res => console.log ('1)  ', res)));
-
-      //   console.log (poll_something() );
-
 
       // var warningsData = [];
       // var filteredData = [];
