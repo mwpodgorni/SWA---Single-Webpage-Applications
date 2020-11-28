@@ -51,43 +51,7 @@ const poll_url = (url) => interval(1000).pipe(concatMap(() => ajax.getJSON(url))
 const observable = poll_url("http://localhost:8080/warnings").pipe(map((res) => res.warnings));
 
 //checking for change, subscribing
-const sub = observable
-  .pipe(distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)))
-  .subscribe({
-    next: (event) => {
-      console.log("event:", event);
-      var ids = [];
-      warningsData.forEach((e) => {
-        ids.push(e.id);
-      });
-      event.forEach((element) => {
-        if (ids.includes(element.id)) {
-          for (let i = 0; i < warningsData.length; i++) {
-            if (element.id == warningsData[i].id) {
-              if (warningsData[i].oldValue) {
-                warningsData[i].oldValue = warningsData[i].newValue;
-                warningsData[i].newValue.severity = element.severity;
-                warningsData[i].newValue.prediction = element.prediction;
-              } else {
-                let newObject = {
-                  id: warningsData[i].id,
-                  oldValue: { severity: warningsData[i].severity, prediction: warningsData[i].prediction },
-                  newValue: { severity: element.severity, prediction: element.prediction },
-                };
-                warningsData[i] = newObject;
-              }
-            }
-          }
-          // warningsData.forEach((e) => {});
-        } else {
-          warningsData.push(element);
-        }
-      });
-      setSeverity();
-    },
-    error: (error) => console.log(error),
-    complete: () => console.log("complete!"),
-  });
+var sub = returnSubscription();
 window.setSeverity = function () {
   var severityLevel = document.getElementById("severity-level");
   filteredData = [];
@@ -252,42 +216,47 @@ window.turnOnWarnings = function () {
   turnOnButton.disabled = true;
   turnOffButton.disabled = false;
   console.log("sub");
-  observable.pipe(distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))).subscribe({
-    next: (event) => {
-      console.log("event:", event);
-      var ids = [];
-      warningsData.forEach((e) => {
-        ids.push(e.id);
-      });
-      event.forEach((element) => {
-        if (ids.includes(element.id)) {
-          for (let i = 0; i < warningsData.length; i++) {
-            if (element.id == warningsData[i].id) {
-              if (warningsData[i].oldValue) {
-                warningsData[i].oldValue = warningsData[i].newValue;
-                warningsData[i].newValue.severity = element.severity;
-                warningsData[i].newValue.prediction = element.prediction;
-              } else {
-                let newObject = {
-                  id: warningsData[i].id,
-                  oldValue: { severity: warningsData[i].severity, prediction: warningsData[i].prediction },
-                  newValue: { severity: element.severity, prediction: element.prediction },
-                };
-                warningsData[i] = newObject;
+  sub = returnSubscription();
+};
+function returnSubscription() {
+  return observable
+    .pipe(distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)))
+    .subscribe({
+      next: (event) => {
+        console.log("event:", event);
+        var ids = [];
+        warningsData.forEach((e) => {
+          ids.push(e.id);
+        });
+        event.forEach((element) => {
+          if (ids.includes(element.id)) {
+            for (let i = 0; i < warningsData.length; i++) {
+              if (element.id == warningsData[i].id) {
+                if (warningsData[i].oldValue) {
+                  warningsData[i].oldValue = warningsData[i].newValue;
+                  warningsData[i].newValue.severity = element.severity;
+                  warningsData[i].newValue.prediction = element.prediction;
+                } else {
+                  let newObject = {
+                    id: warningsData[i].id,
+                    oldValue: { severity: warningsData[i].severity, prediction: warningsData[i].prediction },
+                    newValue: { severity: element.severity, prediction: element.prediction },
+                  };
+                  warningsData[i] = newObject;
+                }
               }
             }
+            // warningsData.forEach((e) => {});
+          } else {
+            warningsData.push(element);
           }
-          // warningsData.forEach((e) => {});
-        } else {
-          warningsData.push(element);
-        }
-      });
-      setSeverity();
-    },
-    error: (error) => console.log(error),
-    complete: () => console.log("complete!"),
-  });
-};
+        });
+        setSeverity();
+      },
+      error: (error) => console.log(error),
+      complete: () => console.log("complete!"),
+    });
+}
 window.turnOffWarnings = function () {
   const turnOnButton = document.getElementById("turn-on");
   const turnOffButton = document.getElementById("turn-off");
